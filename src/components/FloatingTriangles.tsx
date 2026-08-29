@@ -14,12 +14,49 @@ interface Triangle {
 
 interface FloatingTrianglesProps {
   theme: 'light' | 'dark';
+  variant?: 'default' | 'hero';
 }
 
 // Map triangle properties to theme-appropriate color presets
-const getTriangleStyles = (triangle: Triangle, theme: 'light' | 'dark') => {
+const getTriangleStyles = (
+  triangle: Triangle,
+  theme: 'light' | 'dark',
+  variant: 'default' | 'hero',
+) => {
   const isDark = theme === 'dark';
   const { colorType, depth } = triangle;
+
+  if (isDark && variant === 'hero') {
+    const blur = Math.max(0, (1 - depth) * 3);
+
+    switch (colorType) {
+      case 'primary':
+        return {
+          fill: 'rgba(255, 255, 255, 0.13)',
+          stroke: 'rgba(255, 255, 255, 0.5)',
+          filter: `blur(${blur}px)`,
+        };
+      case 'secondary':
+        return {
+          fill: 'rgba(255, 255, 255, 0.09)',
+          stroke: 'rgba(255, 255, 255, 0.38)',
+          filter: `blur(${blur}px)`,
+        };
+      case 'accent':
+        return {
+          fill: 'rgba(255, 255, 255, 0.17)',
+          stroke: 'rgba(255, 255, 255, 0.58)',
+          filter: `blur(${Math.max(0, blur - 1)}px)`,
+        };
+      case 'neutral':
+      default:
+        return {
+          fill: 'rgba(255, 255, 255, 0.06)',
+          stroke: 'rgba(255, 255, 255, 0.28)',
+          filter: `blur(${blur + 1}px)`,
+        };
+    }
+  }
 
   if (isDark) {
     // Strictly monochrome palette for dark mode (whites, greys, blacks)
@@ -88,11 +125,12 @@ interface FloatingTriangleItemProps {
   smoothX: any;
   smoothY: any;
   theme: 'light' | 'dark';
+  variant: 'default' | 'hero';
 }
 
-function FloatingTriangleItem({ triangle, smoothX, smoothY, theme }: FloatingTriangleItemProps) {
-  const styles = getTriangleStyles(triangle, theme);
-  const parallaxAmount = triangle.depth * 55; // max shift in pixels
+function FloatingTriangleItem({ triangle, smoothX, smoothY, theme, variant }: FloatingTriangleItemProps) {
+  const styles = getTriangleStyles(triangle, theme, variant);
+  const parallaxAmount = triangle.depth * (variant === 'hero' ? 72 : 55);
 
   // Mathematically mapping the smooth reactive mouse movement coordinates without breaking Rules of Hooks
   const xOffset = useTransform(smoothX, (val: number) => val * parallaxAmount);
@@ -106,7 +144,7 @@ function FloatingTriangleItem({ triangle, smoothX, smoothY, theme }: FloatingTri
         top: `${triangle.y}%`,
         width: triangle.size,
         height: triangle.size,
-        opacity: triangle.depth * 0.9,
+        opacity: variant === 'hero' ? 0.32 + triangle.depth * 0.68 : triangle.depth * 0.9,
         zIndex: Math.floor(triangle.depth * 10),
       }}
       animate={{
@@ -172,7 +210,7 @@ function FloatingTriangleItem({ triangle, smoothX, smoothY, theme }: FloatingTri
   );
 }
 
-export default function FloatingTriangles({ theme }: FloatingTrianglesProps) {
+export default function FloatingTriangles({ theme, variant = 'default' }: FloatingTrianglesProps) {
   const [triangles, setTriangles] = useState<Triangle[]>([]);
   
   // Mouse position values for parallax effect
@@ -255,6 +293,7 @@ export default function FloatingTriangles({ theme }: FloatingTrianglesProps) {
           smoothX={smoothX}
           smoothY={smoothY}
           theme={theme}
+          variant={variant}
         />
       ))}
     </div>

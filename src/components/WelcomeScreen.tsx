@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Play, Volume2, VolumeX, Sparkles, Settings, ArrowRight, Sun, Moon, RefreshCw, Layers, Zap } from 'lucide-react';
+import { Volume2, VolumeX, Settings, ArrowRight, Sun, Moon, RefreshCw, Zap } from 'lucide-react';
 import Logo from './Logo';
 import FloatingTriangles from './FloatingTriangles';
 import { sfx } from './SoundManager';
@@ -16,7 +16,6 @@ export default function WelcomeScreen({ onEnter, theme, setTheme }: WelcomeScree
   const [loadingStateText, setLoadingStateText] = useState('Carregando marca...');
   const [isLoaded, setIsLoaded] = useState(false);
   const [soundMuted, setSoundMuted] = useState(false);
-  const [particleSpeed, setParticleSpeed] = useState(1); // multiplier
   const [showSettings, setShowSettings] = useState(false);
   const [clickBurst, setClickBurst] = useState<{ x: number; y: number; id: number }[]>([]);
 
