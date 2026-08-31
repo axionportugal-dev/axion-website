@@ -1,0 +1,200 @@
+import type { LucideIcon } from 'lucide-react';
+import {
+  Award,
+  BrainCircuit,
+  Megaphone,
+  Monitor,
+  Target,
+  Workflow,
+} from 'lucide-react';
+
+export interface ServiceArea {
+  id: string;
+  slug: string;
+  title: string;
+  desc: string;
+  intro: string;
+  detail: string;
+  services: string[];
+  benefits: string[];
+  ecosystem: string;
+  icon: LucideIcon;
+}
+
+export const serviceAreas: ServiceArea[] = [
+  {
+    id: '01',
+    slug: 'branding-identidade',
+    icon: Award,
+    title: 'Branding & Identidade',
+    desc: 'Estratégia, expressão visual e sistemas de marca preparados para crescer com consistência.',
+    intro: 'Criamos marcas com direção, coerência e capacidade de se afirmar em todos os pontos de contacto.',
+    detail: 'A área de Branding & Identidade organiza a forma como uma empresa é percebida. Trabalhamos posicionamento, linguagem visual, logótipo, sistema gráfico e guidelines para que a marca tenha uma presença consistente, reconhecível e preparada para evoluir.',
+    services: [
+      'Branding',
+      'Identidade visual',
+      'Criação e redesign de logótipos',
+      'Posicionamento de marca',
+      'Direção artística',
+      'Sistemas visuais',
+      'Paletas, tipografia e guidelines',
+      'Rebranding',
+    ],
+    benefits: [
+      'Comunicação visual mais consistente em canais digitais e comerciais.',
+      'Marca mais clara para clientes, equipa e parceiros.',
+      'Base visual sólida para website, campanhas, redes sociais e materiais institucionais.',
+      'Maior controlo sobre a forma como a empresa se apresenta no mercado.',
+    ],
+    ecosystem: 'A identidade visual orienta o website, o conteúdo, as campanhas e a forma como a automação comunica com leads e clientes. É a base que dá coerência ao ecossistema digital.',
+  },
+  {
+    id: '02',
+    slug: 'websites',
+    icon: Monitor,
+    title: 'Web & Produtos Digitais',
+    desc: 'Experiências e produtos digitais personalizados, da interface à integração técnica.',
+    intro: 'Desenhamos e desenvolvemos websites, plataformas e produtos digitais que unem estética, performance e utilidade real.',
+    detail: 'Esta área transforma necessidades de negócio em experiências digitais funcionais. Criamos websites institucionais, landing pages, e-commerce, plataformas e software à medida, com atenção à experiência de utilização, performance técnica e integração com ferramentas externas.',
+    services: [
+      'Criação de websites',
+      'Websites institucionais',
+      'Landing pages',
+      'E-commerce',
+      'Desenvolvimento web personalizado',
+      'UX/UI',
+      'Plataformas web',
+      'Software à medida',
+      'Integrações com APIs',
+      'Manutenção e evolução de produtos digitais',
+    ],
+    benefits: [
+      'Presença digital mais clara, rápida e alinhada com a marca.',
+      'Experiências mais intuitivas para visitantes, clientes e equipas internas.',
+      'Integrações que reduzem tarefas manuais e dispersão de dados.',
+      'Base técnica preparada para evoluir com novas funcionalidades.',
+    ],
+    ecosystem: 'O website ou produto digital funciona como o centro operacional do ecossistema: recebe tráfego, converte oportunidades, recolhe dados e liga-se a CRM, automações e ferramentas de IA.',
+  },
+  {
+    id: '03',
+    slug: 'marketing-digital',
+    icon: Target,
+    title: 'Marketing & Aquisição',
+    desc: 'Estratégia e performance para transformar atenção em procura, leads e crescimento mensurável.',
+    intro: 'Planeamos sistemas de aquisição que ligam estratégia, canais digitais, campanhas e conversão.',
+    detail: 'Ajudamos empresas a estruturar a forma como chegam ao público certo. Trabalhamos estratégia de marketing digital, SEO, publicidade paga, funis de conversão e otimização contínua para transformar tráfego em oportunidades comerciais qualificadas.',
+    services: [
+      'Estratégia de marketing digital',
+      'Geração e captação de leads',
+      'Funis de conversão',
+      'SEO',
+      'Google Ads',
+      'Meta Ads',
+      'LinkedIn Ads',
+      'TikTok Ads quando aplicável',
+      'Publicidade digital',
+      'Campanhas de performance',
+      'Otimização de conversão',
+      'Estratégia de aquisição',
+    ],
+    benefits: [
+      'Maior clareza sobre canais, mensagens e prioridades de investimento.',
+      'Campanhas mais alinhadas com objetivos comerciais concretos.',
+      'Melhor aproveitamento do tráfego através de páginas e funis preparados para converter.',
+      'Leitura mais organizada dos dados de aquisição e conversão.',
+    ],
+    ecosystem: 'A aquisição alimenta o ecossistema com procura qualificada. Quando ligada ao website, CRM e automação, cada lead pode ser registada, segmentada e acompanhada com mais precisão.',
+  },
+  {
+    id: '04',
+    slug: 'gestao-redes-sociais',
+    icon: Megaphone,
+    title: 'Social Media & Conteúdo',
+    desc: 'Conteúdo e presença social coerentes, relevantes e orientados ao crescimento orgânico.',
+    intro: 'Construímos presença social com estratégia, consistência visual e conteúdo adequado ao posicionamento da marca.',
+    detail: 'A área de Social Media & Conteúdo organiza o que a marca comunica, quando comunica e como aparece nos canais sociais. Trabalhamos planeamento editorial, criação de conteúdo, copywriting, direção artística, community management e reporting.',
+    services: [
+      'Gestão de redes sociais',
+      'Estratégia de Social Media',
+      'Planeamento editorial',
+      'Criação de conteúdo',
+      'Copywriting',
+      'Direção artística',
+      'Posts',
+      'Stories',
+      'Reels',
+      'Community management',
+      'Análise e reporting',
+      'Estratégia de crescimento orgânico',
+    ],
+    benefits: [
+      'Comunicação mais consistente e reconhecível nas redes sociais.',
+      'Conteúdo planeado com intenção, não apenas publicação avulsa.',
+      'Melhor ligação entre marca, audiência e objetivos comerciais.',
+      'Rotina de análise para ajustar formatos, temas e prioridades.',
+    ],
+    ecosystem: 'O conteúdo reforça a marca, apoia campanhas, educa leads e mantém a empresa presente entre pontos de conversão. Quando integrado com aquisição e CRM, deixa de ser uma ilha separada.',
+  },
+  {
+    id: '05',
+    slug: 'crm-automacao',
+    icon: Workflow,
+    title: 'CRM & Automação',
+    desc: 'Sistemas que ligam leads, equipas e operação através de processos automatizados.',
+    intro: 'Desenvolvemos sistemas para organizar leads, clientes, equipas e processos comerciais com mais controlo.',
+    detail: 'Esta área liga marketing, vendas e operação através de CRM, pipelines, automações e dashboards. O objetivo é reduzir dispersão, facilitar acompanhamento comercial e criar fluxos internos mais claros.',
+    services: [
+      'Desenvolvimento de CRM à medida',
+      'Implementação e personalização de CRM',
+      'Pipelines comerciais',
+      'Captação e organização de leads',
+      'Integrações entre ferramentas',
+      'Automação de processos',
+      'Fluxos de follow-up',
+      'Automação comercial',
+      'Sistemas internos',
+      'Dashboards e ferramentas operacionais',
+      'Integração entre marketing, vendas e operação',
+    ],
+    benefits: [
+      'Menos perda de informação entre marketing, vendas e operação.',
+      'Processos de acompanhamento mais claros e repetíveis.',
+      'Melhor visibilidade sobre oportunidades, tarefas e estado comercial.',
+      'Base preparada para automações e futuras integrações com IA.',
+    ],
+    ecosystem: 'O CRM é a camada que transforma contactos soltos em relação comercial organizada. Liga o tráfego, os formulários, as campanhas, os dados e as equipas.',
+  },
+  {
+    id: '06',
+    slug: 'inteligencia-artificial',
+    icon: BrainCircuit,
+    title: 'Inteligência Artificial',
+    desc: 'Soluções inteligentes integradas nos fluxos reais de marketing, vendas e operação.',
+    intro: 'Integramos IA em processos concretos para apoiar equipas, automatizar tarefas e melhorar a resposta ao cliente.',
+    detail: 'A Inteligência Artificial é aplicada onde existe utilidade operacional: agentes, assistentes, qualificação de leads, atendimento inteligente, automação de tarefas repetitivas e ligação com CRM, websites e workflows internos.',
+    services: [
+      'Integração de inteligência artificial em empresas',
+      'Agentes de IA',
+      'Assistentes inteligentes',
+      'Agentes comerciais',
+      'Qualificação automática de leads',
+      'Automação com IA',
+      'Atendimento inteligente',
+      'Integração de IA com CRM',
+      'Integração de IA com websites',
+      'Workflows inteligentes',
+      'Automação de tarefas repetitivas',
+      'Soluções AI personalizadas',
+    ],
+    benefits: [
+      'Automação de tarefas repetitivas com maior consistência.',
+      'Apoio inteligente em contacto, qualificação e follow-up.',
+      'Melhor utilização dos dados existentes em website, CRM e operação.',
+      'Soluções adaptadas aos fluxos reais da empresa.',
+    ],
+    ecosystem: 'A IA ganha valor quando está ligada aos pontos certos: website, formulários, CRM, campanhas e processos internos. A AXION integra essa camada sem a separar da operação real.',
+  },
+];
+
+export const serviceBySlug = (slug?: string) => serviceAreas.find((service) => service.slug === slug);

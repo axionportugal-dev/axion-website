@@ -3,12 +3,15 @@ import { AnimatePresence, motion } from 'motion/react';
 import WelcomeScreen from './components/WelcomeScreen';
 import HomePage from './components/HomePage';
 import BudgetPage from './components/BudgetPage';
+import ServicesPage from './components/ServicesPage';
 
 const AdminPage = lazy(() => import('./components/AdminPage'));
 
 export default function App() {
   // Brand defaults to 'light' mode as requested, fully synchronized with 'dark' mode.
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [pathname, setPathname] = useState(() => window.location.pathname);
+  const [homeStep, setHomeStep] = useState(0);
   
   // Navigation screen states: 'welcome' | 'entered' | 'budget'
   const [currentScreen, setCurrentScreen] = useState<'welcome' | 'entered' | 'budget'>('welcome');
@@ -23,6 +26,27 @@ export default function App() {
     }
   }, [theme]);
 
+  useEffect(() => {
+    const handlePopState = () => {
+      setPathname(window.location.pathname);
+      if (window.location.pathname === '/') {
+        setCurrentScreen('entered');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const navigateToPath = (nextPath: string) => {
+    if (window.location.pathname !== nextPath) {
+      window.history.pushState({}, '', nextPath);
+      setPathname(nextPath);
+    }
+
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  };
+
   const handleEnterSite = () => {
     setCurrentScreen('entered');
   };
@@ -35,11 +59,47 @@ export default function App() {
     setCurrentScreen('budget');
   };
 
+  const handleNavigateToServices = () => {
+    navigateToPath('/servicos');
+  };
+
+  const handleNavigateToService = (slug: string) => {
+    const nextPath = `/servicos/${slug}`;
+
+    if (window.location.pathname !== nextPath) {
+      window.history.pushState({}, '', nextPath);
+      setPathname(nextPath);
+    }
+  };
+
+  const handleNavigateToServicesHub = () => {
+    navigateToPath('/servicos');
+  };
+
+  const handleNavigateFromServicesToHome = () => {
+    navigateToPath('/');
+    setHomeStep(0);
+    setCurrentScreen('entered');
+  };
+
+  const handleNavigateFromServicesToHomeSection = (index: number) => {
+    navigateToPath('/');
+    setHomeStep(index);
+    setCurrentScreen('entered');
+  };
+
+  const handleNavigateFromServicesToBudget = () => {
+    navigateToPath('/');
+    setCurrentScreen('budget');
+  };
+
   const handleBackToHome = () => {
     setCurrentScreen('entered');
   };
 
-  const isAdminRoute = window.location.pathname === '/admin' || window.location.pathname.startsWith('/admin/');
+  const isAdminRoute = pathname === '/admin' || pathname.startsWith('/admin/');
+  const isServicesRoute = pathname === '/servicos' || pathname.startsWith('/servicos/');
+  const activeServiceSlug = pathname.startsWith('/servicos/') ? pathname.replace('/servicos/', '').split('/')[0] : undefined;
 
   if (isAdminRoute) {
     return (
@@ -52,6 +112,19 @@ export default function App() {
       >
         <AdminPage />
       </Suspense>
+    );
+  }
+
+  if (isServicesRoute) {
+    return (
+      <ServicesPage
+        activeSlug={activeServiceSlug}
+        onNavigateHome={handleNavigateFromServicesToHome}
+        onNavigateHomeSection={handleNavigateFromServicesToHomeSection}
+        onNavigateBudget={handleNavigateFromServicesToBudget}
+        onNavigateService={handleNavigateToService}
+        onNavigateServicesHub={handleNavigateToServicesHub}
+      />
     );
   }
 
@@ -85,8 +158,10 @@ export default function App() {
             className="w-full"
           >
             <HomePage
+              initialStep={homeStep}
               onBack={handleBackToWelcome}
               onNavigateToBudget={handleNavigateToBudget}
+              onNavigateToServices={handleNavigateToServices}
             />
           </motion.div>
         )}

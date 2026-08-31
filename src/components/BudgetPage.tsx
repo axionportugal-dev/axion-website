@@ -18,16 +18,13 @@ import {
   Shield,
   Activity,
   Award,
-  BrainCircuit,
-  Megaphone,
-  Monitor,
   Target,
-  Workflow,
   Euro,
   CheckCircle2
 } from 'lucide-react';
 import Logo from './Logo';
 import FloatingTriangles from './FloatingTriangles';
+import { serviceAreas } from '../data/services';
 
 interface BudgetPageProps {
   onBackToHome: () => void;
@@ -65,50 +62,13 @@ const budgetOptions = [
   'Ainda não tenho um budget definido',
 ];
 
-const budgetServiceAreas = [
-  {
-    id: '01',
-    title: 'Branding & Identidade',
-    desc: 'Estratégia, expressão visual e sistemas de marca preparados para crescer com consistência.',
-    serviceCount: 8,
-    icon: Award,
-  },
-  {
-    id: '02',
-    title: 'Web & Produtos Digitais',
-    desc: 'Experiências e produtos digitais personalizados, da interface à integração técnica.',
-    serviceCount: 10,
-    icon: Monitor,
-  },
-  {
-    id: '03',
-    title: 'Marketing & Aquisição',
-    desc: 'Estratégia e performance para transformar atenção em procura, leads e crescimento mensurável.',
-    serviceCount: 12,
-    icon: Target,
-  },
-  {
-    id: '04',
-    title: 'Social Media & Conteúdo',
-    desc: 'Conteúdo e presença social coerentes, relevantes e orientados ao crescimento orgânico.',
-    serviceCount: 12,
-    icon: Megaphone,
-  },
-  {
-    id: '05',
-    title: 'CRM & Automação',
-    desc: 'Sistemas que ligam leads, equipas e operação através de processos automatizados.',
-    serviceCount: 11,
-    icon: Workflow,
-  },
-  {
-    id: '06',
-    title: 'Inteligência Artificial',
-    desc: 'Soluções inteligentes integradas nos fluxos reais de marketing, vendas e operação.',
-    serviceCount: 12,
-    icon: BrainCircuit,
-  },
-];
+const budgetServiceAreas = serviceAreas.map((service) => ({
+  id: service.id,
+  title: service.title,
+  desc: service.desc,
+  serviceCount: service.services.length,
+  icon: service.icon,
+}));
 
 const quizStepVariants = {
   enter: ({ direction, reduced }: { direction: number; reduced: boolean }) => ({

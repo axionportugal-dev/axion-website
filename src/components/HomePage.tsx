@@ -3,12 +3,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   ArrowLeft, 
   ArrowRight, 
-  Award,
-  BrainCircuit,
-  Megaphone,
-  Monitor,
-  Target,
-  Workflow,
   X,
   ChevronLeft,
   ChevronRight,
@@ -16,6 +10,8 @@ import {
 } from 'lucide-react';
 import Logo from './Logo';
 import FloatingTriangles from './FloatingTriangles';
+import { WebsiteFooterContent } from './WebsiteFooter';
+import { serviceAreas } from '../data/services';
 
 // Type-safe string paths for custom company logos uploaded to assets
 const revissantLogo = "/assets/revissant.png";
@@ -27,8 +23,10 @@ const casasDoBecoBackground = new URL('../../assets/casasdobecovideo.mp4', impor
 const heroBackground = new URL('../../assets/herobw.png', import.meta.url).href;
 
 interface HomePageProps {
+  initialStep?: number;
   onBack: () => void;
   onNavigateToBudget: () => void;
+  onNavigateToServices: () => void;
 }
 
 type PresencePhaseKey = 'inertia' | 'transition' | 'ascension';
@@ -83,8 +81,8 @@ const presencePhases: Record<PresencePhaseKey, {
   },
 };
 
-export default function HomePage({ onBack, onNavigateToBudget }: HomePageProps) {
-  const [step, setStep] = useState(0);
+export default function HomePage({ initialStep = 0, onBack, onNavigateToBudget, onNavigateToServices }: HomePageProps) {
+  const [step, setStep] = useState(initialStep);
   
   // Pop-up states for Liquid Glass capabilities description (Light mode, clean glass)
   const [activePopupIdx, setActivePopupIdx] = useState<number | null>(null);
@@ -325,121 +323,7 @@ export default function HomePage({ onBack, onNavigateToBudget }: HomePageProps) 
   const sectionLabels = ["Início", "Serviços", "Portfólio", "Presença", "Orçamento"];
 
   // Capabilities details structure for the Liquid Glass Popup Modals
-  const capabilitiesData = [
-    {
-      id: '01',
-      icon: <Award size={20} className="text-slate-800" />,
-      title: 'Branding & Identidade',
-      desc: 'Estratégia, expressão visual e sistemas de marca preparados para crescer com consistência.',
-      services: [
-        'Branding',
-        'Identidade visual',
-        'Criação e redesign de logótipos',
-        'Posicionamento de marca',
-        'Direção artística',
-        'Sistemas visuais',
-        'Paletas, tipografia e guidelines',
-        'Rebranding',
-      ],
-    },
-    {
-      id: '02',
-      icon: <Monitor size={20} className="text-slate-800" />,
-      title: 'Web & Produtos Digitais',
-      desc: 'Experiências e produtos digitais personalizados, da interface à integração técnica.',
-      services: [
-        'Criação de websites',
-        'Websites institucionais',
-        'Landing pages',
-        'E-commerce',
-        'Desenvolvimento web personalizado',
-        'UX/UI',
-        'Plataformas web',
-        'Software à medida',
-        'Integrações com APIs',
-        'Manutenção e evolução de produtos digitais',
-      ],
-    },
-    {
-      id: '03',
-      icon: <Target size={20} className="text-slate-800" />,
-      title: 'Marketing & Aquisição',
-      desc: 'Estratégia e performance para transformar atenção em procura, leads e crescimento mensurável.',
-      services: [
-        'Estratégia de marketing digital',
-        'Geração e captação de leads',
-        'Funis de conversão',
-        'SEO',
-        'Google Ads',
-        'Meta Ads',
-        'LinkedIn Ads',
-        'TikTok Ads quando aplicável',
-        'Publicidade digital',
-        'Campanhas de performance',
-        'Otimização de conversão',
-        'Estratégia de aquisição',
-      ],
-    },
-    {
-      id: '04',
-      icon: <Megaphone size={20} className="text-slate-800" />,
-      title: 'Social Media & Conteúdo',
-      desc: 'Conteúdo e presença social coerentes, relevantes e orientados ao crescimento orgânico.',
-      services: [
-        'Gestão de redes sociais',
-        'Estratégia de Social Media',
-        'Planeamento editorial',
-        'Criação de conteúdo',
-        'Copywriting',
-        'Direção artística',
-        'Posts',
-        'Stories',
-        'Reels',
-        'Community management',
-        'Análise e reporting',
-        'Estratégia de crescimento orgânico',
-      ],
-    },
-    {
-      id: '05',
-      icon: <Workflow size={20} className="text-slate-800" />,
-      title: 'CRM & Automação',
-      desc: 'Sistemas que ligam leads, equipas e operação através de processos automatizados.',
-      services: [
-        'Desenvolvimento de CRM à medida',
-        'Implementação e personalização de CRM',
-        'Pipelines comerciais',
-        'Captação e organização de leads',
-        'Integrações entre ferramentas',
-        'Automação de processos',
-        'Fluxos de follow-up',
-        'Automação comercial',
-        'Sistemas internos',
-        'Dashboards e ferramentas operacionais',
-        'Integração entre marketing, vendas e operação',
-      ],
-    },
-    {
-      id: '06',
-      icon: <BrainCircuit size={20} className="text-slate-800" />,
-      title: 'Inteligência Artificial',
-      desc: 'Soluções inteligentes integradas nos fluxos reais de marketing, vendas e operação.',
-      services: [
-        'Integração de inteligência artificial em empresas',
-        'Agentes de IA',
-        'Assistentes inteligentes',
-        'Agentes comerciais',
-        'Qualificação automática de leads',
-        'Automação com IA',
-        'Atendimento inteligente',
-        'Integração de IA com CRM',
-        'Integração de IA com websites',
-        'Workflows inteligentes',
-        'Automação de tarefas repetitivas',
-        'Soluções AI personalizadas',
-      ],
-    },
-  ];
+  const capabilitiesData = serviceAreas;
 
   // Portfolio projects data featuring official uploaded logos and fast high-end sample looping videos from Google Storage CDN
   const portfolioProjects = [
@@ -759,47 +643,61 @@ export default function HomePage({ onBack, onNavigateToBudget }: HomePageProps) 
                     <span>Inteligência Artificial</span>
                     <span className="h-px flex-1 bg-gradient-to-l from-transparent to-slate-900/15" />
                   </div>
+
                 </div>
 
                 <div className="mx-auto grid w-full max-w-6xl grid-cols-2 gap-px overflow-hidden rounded-[24px] border border-slate-900/10 bg-slate-900/10 shadow-[0_24px_70px_rgba(15,23,42,0.08)] lg:grid-cols-3">
-                  {capabilitiesData.map((cap, i) => (
-                    <motion.button
-                      key={cap.id}
-                      type="button"
-                      onClick={() => setActivePopupIdx(i)}
-                      aria-label={`Explorar ${cap.title}`}
-                      initial={{ opacity: 0, y: 16 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.45, delay: 0.08 + i * 0.045, ease: [0.16, 1, 0.3, 1] }}
-                      whileHover={{ scale: 0.99 }}
-                      className="group relative flex min-h-[128px] cursor-pointer flex-col justify-between overflow-hidden bg-white/75 p-4 text-left transition-colors duration-300 hover:bg-white focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-sky-500 sm:min-h-[156px] sm:p-5 md:min-h-[170px] md:p-6"
-                    >
-                      <div className="absolute inset-x-0 top-0 h-px origin-left scale-x-0 bg-sky-500 transition-transform duration-500 group-hover:scale-x-100" />
-                      <div className="absolute -right-12 -top-12 h-28 w-28 rounded-full bg-sky-300/0 blur-3xl transition-colors duration-500 group-hover:bg-sky-300/20" />
+                  {capabilitiesData.map((cap, i) => {
+                    const Icon = cap.icon;
 
-                      <div className="relative z-10 flex items-start justify-between gap-3">
-                        <span className="font-mono text-[9px] tracking-[0.2em] text-slate-400">{cap.id}</span>
-                        <div className="text-slate-700 transition-transform duration-500 group-hover:-translate-y-0.5 group-hover:translate-x-0.5">
-                          {cap.icon}
+                    return (
+                      <motion.button
+                        key={cap.id}
+                        type="button"
+                        onClick={() => setActivePopupIdx(i)}
+                        aria-label={`Explorar ${cap.title}`}
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.45, delay: 0.08 + i * 0.045, ease: [0.16, 1, 0.3, 1] }}
+                        whileHover={{ scale: 0.99 }}
+                        className="group relative flex min-h-[128px] cursor-pointer flex-col justify-between overflow-hidden bg-white/75 p-4 text-left transition-colors duration-300 hover:bg-white focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-sky-500 sm:min-h-[156px] sm:p-5 md:min-h-[170px] md:p-6"
+                      >
+                        <div className="absolute inset-x-0 top-0 h-px origin-left scale-x-0 bg-sky-500 transition-transform duration-500 group-hover:scale-x-100" />
+                        <div className="absolute -right-12 -top-12 h-28 w-28 rounded-full bg-sky-300/0 blur-3xl transition-colors duration-500 group-hover:bg-sky-300/20" />
+
+                        <div className="relative z-10 flex items-start justify-between gap-3">
+                          <span className="font-mono text-[9px] tracking-[0.2em] text-slate-400">{cap.id}</span>
+                          <div className="text-slate-700 transition-transform duration-500 group-hover:-translate-y-0.5 group-hover:translate-x-0.5">
+                            <Icon size={20} className="text-slate-800" />
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="relative z-10 mt-4">
-                        <h4 className="max-w-[13rem] text-[10px] font-extrabold uppercase leading-tight tracking-[0.1em] text-slate-900 sm:text-xs">
-                          {cap.title}
-                        </h4>
-                        <p className="mt-2 hidden max-w-[18rem] text-[9px] leading-relaxed text-slate-500 sm:block md:text-[10px]">
-                          {cap.desc}
-                        </p>
-                      </div>
+                        <div className="relative z-10 mt-4">
+                          <h4 className="max-w-[13rem] text-[10px] font-extrabold uppercase leading-tight tracking-[0.1em] text-slate-900 sm:text-xs">
+                            {cap.title}
+                          </h4>
+                          <p className="mt-2 hidden max-w-[18rem] text-[9px] leading-relaxed text-slate-500 sm:block md:text-[10px]">
+                            {cap.desc}
+                          </p>
+                        </div>
 
-                      <div className="relative z-10 mt-3 flex items-center justify-between text-[8px] font-bold uppercase tracking-[0.16em] text-slate-400 transition-colors group-hover:text-sky-700">
-                        <span>{cap.services.length} serviços</span>
-                        <ArrowRight size={11} className="transition-transform duration-300 group-hover:translate-x-1" />
-                      </div>
-                    </motion.button>
-                  ))}
+                        <div className="relative z-10 mt-3 flex items-center justify-between text-[8px] font-bold uppercase tracking-[0.16em] text-slate-400 transition-colors group-hover:text-sky-700">
+                          <span>{cap.services.length} serviços</span>
+                          <ArrowRight size={11} className="transition-transform duration-300 group-hover:translate-x-1" />
+                        </div>
+                      </motion.button>
+                    );
+                  })}
                 </div>
+
+                <button
+                  type="button"
+                  onClick={onNavigateToServices}
+                  className="group mx-auto flex cursor-pointer items-center gap-2 border-b border-slate-900/15 pb-1 text-[8px] font-extrabold uppercase tracking-[0.22em] text-slate-700 transition-colors duration-300 hover:border-sky-500 hover:text-sky-700 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-500"
+                >
+                  <span>Explorar serviços</span>
+                  <ArrowRight size={10} className="transition-transform duration-300 group-hover:translate-x-1" />
+                </button>
               </div>
             </motion.div>
           )}
@@ -1030,74 +928,16 @@ export default function HomePage({ onBack, onNavigateToBudget }: HomePageProps) 
               transition={{ type: 'spring', stiffness: 110, damping: 24 }}
               className="absolute inset-x-0 bottom-0 z-40 w-full px-6 md:px-12 pointer-events-auto text-left bg-slate-950/98 backdrop-blur-2xl border-t border-white/10 shadow-[0_-30px_80px_rgba(2,6,23,0.48)]"
             >
-              <div className="absolute left-1/2 top-0 h-40 w-[36rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-500/10 blur-[90px] pointer-events-none" />
-
-              <div className="relative w-full max-w-7xl mx-auto py-6 md:py-8">
-                <div className="h-px w-full bg-gradient-to-r from-sky-400/70 via-white/15 to-transparent" />
-
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-5 md:gap-8 lg:gap-12 py-6 md:py-8 items-start">
-                  <section className="md:col-span-6 space-y-3">
-                    <span className="text-[8px] font-mono tracking-[0.3em] uppercase text-sky-400">
-                      AXION / PORTUGAL
-                    </span>
-
-                    <div className="flex items-center gap-3">
-                      <Logo theme="dark" glow={false} className="w-9 h-9 md:w-11 md:h-11" />
-                      <span className="text-base md:text-lg font-black tracking-[0.38em] uppercase text-white">AXION</span>
-                    </div>
-
-                    <h3 className="max-w-xl text-2xl sm:text-3xl font-black tracking-[-0.04em] uppercase text-white leading-none">
-                      Engenharia digital <span className="text-sky-400">de prestígio.</span>
-                    </h3>
-
-                    <p className="max-w-lg text-[9px] md:text-[10px] leading-relaxed text-slate-400 font-medium">
-                      Desenvolvemos ecossistemas tecnológicos de alto impacto para potenciar o seu negócio.
-                    </p>
-                  </section>
-
-                  <nav className="md:col-span-3 space-y-3" aria-label="Navegação do footer">
-                    <span className="block text-[8px] font-mono tracking-[0.24em] uppercase text-slate-600">Navegação</span>
-                    <div className="flex flex-wrap gap-x-5 gap-y-2 md:flex-col md:items-start md:gap-2.5">
-                      {sectionLabels.map((label, idx) => (
-                        <button
-                          key={label}
-                          onClick={() => {
-                            if (!isAnimatingRef.current) {
-                              lockAnimation();
-                              setIsFooterVisible(false);
-                              setStep(idx);
-                            }
-                          }}
-                          className="group flex items-center gap-2 text-[9px] font-bold tracking-[0.16em] uppercase text-slate-400 hover:text-white transition-colors cursor-pointer"
-                        >
-                          <span className="h-px w-0 bg-sky-400 transition-all duration-300 group-hover:w-3" />
-                          <span>{label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </nav>
-
-                  <section className="md:col-span-3 space-y-4">
-                    <span className="block text-[8px] font-mono tracking-[0.24em] uppercase text-slate-600">Contacto direto</span>
-                    <a
-                      href="mailto:axionportugal@gmail.com"
-                      className="group inline-flex items-center gap-3 border-b border-white/15 pb-2 text-[10px] sm:text-xs font-bold tracking-[0.08em] uppercase text-white hover:text-sky-300 hover:border-sky-400/60 transition-colors"
-                    >
-                      <span>axionportugal@gmail.com</span>
-                      <ArrowRight size={12} className="shrink-0 transition-transform duration-300 group-hover:translate-x-1" />
-                    </a>
-                    <span className="flex items-center gap-2 text-[8px] font-mono uppercase tracking-[0.2em] text-slate-500">
-                      <span className="h-1.5 w-1.5 rounded-full bg-sky-400 shadow-[0_0_9px_rgba(56,189,248,0.8)]" />
-                      Portugal · Projetos globais
-                    </span>
-                  </section>
-                </div>
-
-                <div className="flex flex-col sm:flex-row justify-between gap-2 pt-5 border-t border-white/[0.08] text-[7px] sm:text-[8px] font-mono tracking-[0.2em] uppercase text-slate-600">
-                  <span>© 2026 AXION • TODOS OS DIREITOS RESERVADOS</span>
-                  <span>TECNOLOGIA DE PRESTÍGIO</span>
-                </div>
-              </div>
+              <WebsiteFooterContent
+                sectionLabels={sectionLabels}
+                onNavigateSection={(idx) => {
+                  if (!isAnimatingRef.current) {
+                    lockAnimation();
+                    setIsFooterVisible(false);
+                    setStep(idx);
+                  }
+                }}
+              />
             </motion.footer>
           )}
 
@@ -1443,7 +1283,10 @@ export default function HomePage({ onBack, onNavigateToBudget }: HomePageProps) 
                   </span>
 
                   <div className="mt-8 inline-flex h-12 w-12 items-center justify-center rounded-full border border-slate-900/10 bg-white/70 shadow-2xs">
-                    {capabilitiesData[activePopupIdx].icon}
+                    {(() => {
+                      const Icon = capabilitiesData[activePopupIdx].icon;
+                      return <Icon size={20} className="text-slate-800" />;
+                    })()}
                   </div>
 
                   <h4 className="mt-5 max-w-xs text-2xl font-extrabold uppercase leading-[0.95] tracking-[-0.035em] text-slate-900 sm:text-3xl">
