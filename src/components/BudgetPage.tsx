@@ -1,15 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
-import { 
-  ArrowLeft, 
-  ArrowRight, 
-  ChevronLeft, 
+import {
+  ArrowLeft,
+  ArrowRight,
+  ChevronLeft,
   Sparkles,
-  Mail, 
-  Layers, 
-  Phone, 
-  Linkedin, 
-  Instagram, 
+  Mail,
+  Phone,
+  Linkedin,
+  Instagram,
   Globe,
   ChevronDown,
   User,
@@ -93,7 +92,7 @@ export default function BudgetPage({ onBackToHome }: BudgetPageProps) {
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingTextIdx, setLoadingTextIdx] = useState(0);
   const [isQuizContentReady, setIsQuizContentReady] = useState(false);
-  
+
   // Quiz Steps: 0 to 6
   const [quizStep, setQuizStep] = useState(0);
   const [indicatorStep, setIndicatorStep] = useState(0);
@@ -112,7 +111,9 @@ export default function BudgetPage({ onBackToHome }: BudgetPageProps) {
   const [clientEmail, setClientEmail] = useState('');
   const [clientPhone, setClientPhone] = useState('');
   const [clientMessage, setClientMessage] = useState('');
-  const [clipboardSuccess, setClipboardSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const loadingMessages = [
     'Analisando identidade visual...',
@@ -171,42 +172,64 @@ export default function BudgetPage({ onBackToHome }: BudgetPageProps) {
     return () => clearInterval(interval);
   }, [pageState]);
 
-  const generateMailtoLink = () => {
-    const subject = encodeURIComponent(`Pedido de Orçamento Estratégico - ${clientName}`);
-    const body = encodeURIComponent(`Olá equipa AXION,
+  const handleSubmit = async () => {
+    if (isSubmitting) return;
 
-Gostaria de solicitar um orçamento para o desenvolvimento do ecossistema digital da minha marca. Abaixo estão os detalhes estratégicos do meu projeto recolhidos no portal:
+    setIsSubmitting(true);
+    setSubmitError('');
 
---------------------------------------------------
-DIAGNÓSTICO INICIAL (QUIZ):
---------------------------------------------------
-1. Papel na Empresa:
-   > ${quizOwner}
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          owner: quizOwner,
+          size: quizSize,
+          objective: quizObjective,
+          services: quizServices,
+          budget: quizBudget,
+          name: clientName,
+          email: clientEmail,
+          phone: clientPhone,
+          context: clientMessage,
+        }),
+      });
 
-2. Dimensão da Operação:
-   > ${quizSize}
+      if (!response.ok) {
+        throw new Error('Não foi possível enviar o pedido.');
+      }
 
-3. Objetivo do Projeto:
-   > ${quizObjective}
+      setIsSubmitted(true);
+    } catch (error) {
+      console.error('Erro ao enviar pedido:', error);
+      setSubmitError(
+        'Não foi possível enviar o pedido. Tente novamente dentro de alguns instantes.'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-4. Áreas de Serviço Selecionadas:
-   ${quizServices.map((service) => `[x] ${service}`).join('\n   ')}
-
-5. Budget Previsto:
-   > ${quizBudget}
-
---------------------------------------------------
-DADOS DE CONTACTO:
---------------------------------------------------
-Nome / Marca: ${clientName}
-E-mail: ${clientEmail}
-Telefone: ${clientPhone || 'Não facultado'}
-Mensagem Adicional: ${clientMessage || 'Nenhuma'}
-
---------------------------------------------------
-Briefing gerado automaticamente pelo portal interativo AXION.`);
-
-    return `mailto:geral@axion.pt?subject=${subject}&body=${body}`;
+  const resetQuiz = () => {
+    setQuizOwner('');
+    setQuizSize('PME em Escala');
+    setQuizObjective('');
+    setQuizServices([]);
+    setQuizBudget('');
+    setClientName('');
+    setClientEmail('');
+    setClientPhone('');
+    setClientMessage('');
+    setSubmitError('');
+    setIsSubmitting(false);
+    setIsSubmitted(false);
+    setQuizDirection(-1);
+    setQuizStep(0);
+    setIndicatorStep(0);
+    quizTransitionRef.current = false;
+    hasPlayedInitialQuestionRef.current = false;
   };
 
   // Team size options
@@ -217,8 +240,8 @@ Briefing gerado automaticamente pelo portal interativo AXION.`);
     { label: "Grande Corporação", value: "Grande Corporação", icon: Activity }
   ];
 
-  const currentSizeIndex = teamSizeOptions.findIndex(o => o.value === quizSize) !== -1 
-    ? teamSizeOptions.findIndex(o => o.value === quizSize) 
+  const currentSizeIndex = teamSizeOptions.findIndex(o => o.value === quizSize) !== -1
+    ? teamSizeOptions.findIndex(o => o.value === quizSize)
     : 2;
 
   const isInitialQuestionEntrance = !hasPlayedInitialQuestionRef.current;
@@ -257,7 +280,7 @@ Briefing gerado automaticamente pelo portal interativo AXION.`);
       />
       <div className="fixed left-1/2 top-[-18rem] h-[46rem] w-[46rem] -translate-x-1/2 rounded-full bg-sky-500/15 blur-[150px] pointer-events-none" />
       <div className="fixed -left-32 bottom-10 h-80 w-80 rounded-full bg-blue-600/10 blur-[120px] pointer-events-none" />
-      
+
       {pageState === 'quiz' && (
         <div className="fixed inset-0 opacity-40 pointer-events-none">
           <FloatingTriangles theme="light" />
@@ -290,7 +313,7 @@ Briefing gerado automaticamente pelo portal interativo AXION.`);
       {/* MAIN SCREEN CANVAS */}
       <main className="w-full flex-1 flex flex-col justify-center items-center px-4 sm:px-6 relative z-10 max-w-[90rem] mx-auto py-8 md:py-12">
         <AnimatePresence mode="wait">
-          
+
           {/* LOADER: WHITE BACKGROUND STATE */}
           {pageState === 'loading' && (
             <motion.div
@@ -316,7 +339,7 @@ Briefing gerado automaticamente pelo portal interativo AXION.`);
                 />
               </motion.div>
               {/* Minimalist Percentage Label */}
-              <motion.div 
+              <motion.div
                 className="text-[10px] tracking-[0.35em] font-bold uppercase mb-4 text-sky-300 font-mono"
                 animate={{ opacity: [0.6, 1, 0.6] }}
                 transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
@@ -326,7 +349,7 @@ Briefing gerado automaticamente pelo portal interativo AXION.`);
 
               {/* Ultra-thin Minimalist 1px Line Loader */}
               <div className="w-56 h-[1px] relative overflow-hidden mb-6 bg-white/10">
-                <motion.div 
+                <motion.div
                   className="h-full absolute left-0 top-0 bg-sky-400 shadow-[0_0_12px_rgba(56,189,248,0.9)]"
                   initial={{ width: '0%' }}
                   animate={{ width: `${loadingProgress}%` }}
@@ -356,20 +379,10 @@ Briefing gerado automaticamente pelo portal interativo AXION.`);
               <div className="w-full min-h-[calc(100vh-9rem)] px-2 sm:px-8 md:px-12 relative z-10 text-slate-900 flex flex-col justify-center space-y-8 select-none">
                 <div className="absolute inset-x-12 top-0 h-px bg-gradient-to-r from-transparent via-sky-400/50 to-transparent" />
                 <div className="absolute -right-24 -top-24 h-56 w-56 rounded-full bg-sky-200/30 blur-3xl pointer-events-none" />
-                
+
                 {/* Reset or start over shortcut */}
                 <button
-                  onClick={() => {
-                    goToQuizStep(0);
-                    setQuizOwner('');
-                    setQuizObjective('');
-                    setQuizServices([]);
-                    setQuizBudget('');
-                    setClientName('');
-                    setClientEmail('');
-                    setClientPhone('');
-                    setClientMessage('');
-                  }}
+                  onClick={resetQuiz}
                   className="absolute top-4 right-4 p-2.5 rounded-full border border-slate-200/80 bg-white/70 backdrop-blur-md text-slate-400 hover:text-sky-700 hover:border-sky-300 hover:bg-sky-50 transition-all cursor-pointer focus:outline-none z-10"
                   title="Reiniciar Questionário"
                 >
@@ -403,7 +416,7 @@ Briefing gerado automaticamente pelo portal interativo AXION.`);
                   className="w-full max-w-xl mx-auto flex flex-col items-center space-y-2"
                 >
                   <div className="w-full bg-slate-100 h-[2px] rounded-full overflow-hidden relative">
-                    <motion.div 
+                    <motion.div
                       className="h-full bg-gradient-to-r from-sky-500 to-blue-600 shadow-[0_0_10px_rgba(14,165,233,0.35)]"
                       initial={{ width: "0%" }}
                       animate={{ width: `${((indicatorStep + 1) / TOTAL_QUIZ_STEPS) * 100}%` }}
@@ -526,7 +539,7 @@ Briefing gerado automaticamente pelo portal interativo AXION.`);
                         <motion.div {...stagedEntrance(0.1)} className="space-y-10 py-6 max-w-2xl mx-auto w-full">
                           <div className="relative w-full h-[6px] bg-slate-200 rounded-full">
                             {/* Filled active portion */}
-                            <div 
+                            <div
                               className="absolute top-0 left-0 h-full bg-gradient-to-r from-sky-500 to-blue-600 rounded-full shadow-[0_0_12px_rgba(14,165,233,0.3)] transition-all duration-300"
                               style={{ width: `${(currentSizeIndex / 3) * 100}%` }}
                             />
@@ -543,8 +556,8 @@ Briefing gerado automaticamente pelo portal interativo AXION.`);
                                     className="relative -translate-y-[0px] focus:outline-none group cursor-pointer"
                                   >
                                     <div className={`w-5 h-5 rounded-full border-2 transition-all duration-300 flex items-center justify-center ${
-                                      isSelected 
-                                        ? "bg-white border-sky-500 scale-125 shadow-[0_0_15px_rgba(14,165,233,0.4)]" 
+                                      isSelected
+                                        ? "bg-white border-sky-500 scale-125 shadow-[0_0_15px_rgba(14,165,233,0.4)]"
                                         : "bg-slate-100 border-slate-300 hover:border-slate-400 scale-100"
                                     }`}>
                                       <div className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-sky-500' : 'bg-transparent'}`} />
@@ -595,7 +608,7 @@ Briefing gerado automaticamente pelo portal interativo AXION.`);
 
                         {/* Navigation controls */}
                         <motion.div {...stagedEntrance(0.36)} className="flex items-center justify-between pt-6 border-t border-slate-100 max-w-2xl mx-auto w-full">
-                          <button 
+                          <button
                             onClick={() => goToQuizStep(0)}
                             className="flex items-center space-x-1 text-[9px] font-mono tracking-widest text-slate-400 hover:text-slate-900 uppercase cursor-pointer focus:outline-none font-bold"
                           >
@@ -643,8 +656,8 @@ Briefing gerado automaticamente pelo portal interativo AXION.`);
                                 aria-pressed={isSelected}
                                 onClick={() => setQuizObjective(objective)}
                                 className={`relative flex min-h-16 cursor-pointer items-center justify-center rounded-3xl border p-4 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(15,23,42,0.10)] ${
-                                  isSelected 
-                                    ? "border-sky-500 bg-sky-500/5 shadow-[0_0_20px_rgba(14,165,233,0.1)] scale-[1.02]" 
+                                  isSelected
+                                    ? "border-sky-500 bg-sky-500/5 shadow-[0_0_20px_rgba(14,165,233,0.1)] scale-[1.02]"
                                     : "border-slate-200 bg-slate-50/60 hover:border-slate-300 hover:bg-slate-50"
                                 }`}
                               >
@@ -660,7 +673,7 @@ Briefing gerado automaticamente pelo portal interativo AXION.`);
 
                         {/* Navigation controls */}
                         <motion.div {...stagedEntrance(0.36)} className="flex items-center justify-between pt-6 border-t border-slate-100 max-w-3xl mx-auto w-full">
-                          <button 
+                          <button
                             onClick={() => goToQuizStep(1)}
                             className="flex items-center space-x-1 text-[9px] font-mono tracking-widest text-slate-400 hover:text-slate-900 uppercase cursor-pointer focus:outline-none font-bold"
                           >
@@ -718,8 +731,8 @@ Briefing gerado automaticamente pelo portal interativo AXION.`);
                                   }
                                 }}
                                 className={`group relative flex min-h-[160px] cursor-pointer select-none flex-col overflow-hidden rounded-3xl border p-5 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(15,23,42,0.10)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 ${
-                                  isSelected 
-                                    ? "border-sky-500 bg-sky-500/5 shadow-[0_0_15px_rgba(14,165,233,0.08)] scale-[1.01]" 
+                                  isSelected
+                                    ? "border-sky-500 bg-sky-500/5 shadow-[0_0_15px_rgba(14,165,233,0.08)] scale-[1.01]"
                                     : "border-slate-200 bg-slate-50/60 hover:border-sky-400 hover:bg-sky-500/2"
                                 }`}
                               >
@@ -755,7 +768,7 @@ Briefing gerado automaticamente pelo portal interativo AXION.`);
 
                         {/* Navigation controls */}
                         <motion.div {...stagedEntrance(0.48)} className="flex items-center justify-between pt-6 border-t border-slate-100 max-w-3xl mx-auto w-full">
-                          <button 
+                          <button
                             onClick={() => goToQuizStep(2)}
                             className="flex items-center space-x-1 text-[9px] font-mono tracking-widest text-slate-400 hover:text-slate-900 uppercase cursor-pointer focus:outline-none font-bold"
                           >
@@ -865,8 +878,8 @@ Briefing gerado automaticamente pelo portal interativo AXION.`);
                         <div className="space-y-4 w-full max-w-md mx-auto">
                           <motion.div {...stagedEntrance(0.16)} className="space-y-1 text-left">
                             <label className="text-[8px] font-mono tracking-widest uppercase text-slate-400 font-black block">Nome do Líder ou Empresa</label>
-                            <input 
-                              type="text" 
+                            <input
+                              type="text"
                               required
                               value={clientName}
                               onChange={(e) => setClientName(e.target.value)}
@@ -877,8 +890,8 @@ Briefing gerado automaticamente pelo portal interativo AXION.`);
 
                           <motion.div {...stagedEntrance(0.22)} className="space-y-1 text-left">
                             <label className="text-[8px] font-mono tracking-widest uppercase text-slate-400 font-black block">E-mail Corporativo</label>
-                            <input 
-                              type="email" 
+                            <input
+                              type="email"
                               required
                               value={clientEmail}
                               onChange={(e) => setClientEmail(e.target.value)}
@@ -887,33 +900,40 @@ Briefing gerado automaticamente pelo portal interativo AXION.`);
                             />
                           </motion.div>
 
-                          <motion.div {...stagedEntrance(0.28)} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div className="space-y-1 text-left">
-                              <label className="text-[8px] font-mono tracking-widest uppercase text-slate-400 font-black block">Telefone (Opcional)</label>
-                              <input 
-                                type="tel" 
-                                value={clientPhone}
-                                onChange={(e) => setClientPhone(e.target.value)}
-                                placeholder="EX: +351 912 345 678"
-                                className="w-full p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 focus:border-slate-900 focus:bg-white text-xs text-slate-950 uppercase tracking-wider font-bold focus:outline-none transition-all placeholder:text-slate-400 placeholder:normal-case placeholder:font-normal"
-                              />
-                            </div>
-                            <div className="space-y-1 text-left">
-                              <label className="text-[8px] font-mono tracking-widest uppercase text-slate-400 font-black block">Mensagem (Opcional)</label>
-                              <input 
-                                type="text" 
-                                value={clientMessage}
-                                onChange={(e) => setClientMessage(e.target.value)}
-                                placeholder="EX: EXPANSÃO DE MERCADO"
-                                className="w-full p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 focus:border-slate-900 focus:bg-white text-xs text-slate-950 uppercase tracking-wider font-bold focus:outline-none transition-all placeholder:text-slate-400 placeholder:normal-case placeholder:font-normal"
-                              />
-                            </div>
+                          <motion.div {...stagedEntrance(0.28)} className="space-y-1 text-left">
+                            <label className="text-[8px] font-mono tracking-widest uppercase text-slate-400 font-black block">
+                              Telefone (Opcional)
+                            </label>
+                            <input
+                              type="tel"
+                              value={clientPhone}
+                              onChange={(e) => setClientPhone(e.target.value)}
+                              placeholder="EX: +351 912 345 678"
+                              className="w-full p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 focus:border-slate-900 focus:bg-white text-xs text-slate-950 uppercase tracking-wider font-bold focus:outline-none transition-all placeholder:text-slate-400 placeholder:normal-case placeholder:font-normal"
+                            />
+                          </motion.div>
+                          <motion.div {...stagedEntrance(0.34)} className="space-y-2 text-left">
+                            <label className="text-[8px] font-mono tracking-widest uppercase text-slate-400 font-black block">
+                              Conte-nos um pouco mais sobre o projeto
+                            </label>
+
+                            <textarea
+                              value={clientMessage}
+                              onChange={(e) => setClientMessage(e.target.value)}
+                              rows={5}
+                              placeholder="Explique brevemente o que pretende, o que já existe atualmente, principais necessidades, referências, prazos ou qualquer contexto que considere relevante."
+                              className="w-full resize-none p-4 rounded-xl border border-slate-200 bg-slate-50/60 focus:border-slate-900 focus:bg-white text-xs text-slate-950 leading-relaxed font-medium focus:outline-none transition-all placeholder:text-slate-400 placeholder:font-normal"
+                            />
+
+                            <p className="text-[8px] font-mono text-slate-400 leading-relaxed">
+                              Opcional. Não precisa de ter tudo definido — aprofundaremos consigo os detalhes numa reunião.
+                            </p>
                           </motion.div>
                         </div>
 
                         {/* Navigation controls */}
                         <motion.div {...stagedEntrance(0.38)} className="flex items-center justify-between pt-6 border-t border-slate-100 max-w-md mx-auto w-full">
-                          <button 
+                          <button
                             onClick={() => goToQuizStep(4)}
                             className="flex items-center space-x-1 text-[9px] font-mono tracking-widest text-slate-400 hover:text-slate-900 uppercase cursor-pointer focus:outline-none font-bold"
                           >
@@ -925,14 +945,14 @@ Briefing gerado automaticamente pelo portal interativo AXION.`);
                             onClick={() => goToQuizStep(6)}
                             className="flex items-center space-x-2 px-8 py-3 rounded-full bg-slate-900 hover:bg-sky-600 text-white hover:scale-[1.03] text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer shadow-md disabled:opacity-35 disabled:cursor-not-allowed"
                           >
-                            <span>Gerar Briefing</span>
+                            <span>Rever Pedido</span>
                             <Sparkles size={11} className="text-white animate-pulse" />
                           </button>
                         </motion.div>
                       </motion.div>
                     )}
 
-                    {/* STEP 7: BRIEFING COMPILATION SUCCESS */}
+                    {/* STEP 7: REVIEW AND SUBMISSION */}
                     {quizStep === 6 && (
                       <motion.div
                         key="step6"
@@ -941,99 +961,204 @@ Briefing gerado automaticamente pelo portal interativo AXION.`);
                         initial="enter"
                         animate="center"
                         exit="exit"
-                        transition={{ duration: shouldReduceMotion ? 0.12 : 0.26, ease: [0.16, 1, 0.3, 1] }}
-                        className="w-full space-y-6 flex flex-col items-center text-center max-w-xl mx-auto"
+                        transition={{
+                          duration: shouldReduceMotion ? 0.12 : 0.26,
+                          ease: [0.16, 1, 0.3, 1],
+                        }}
+                        className="w-full flex flex-col items-center text-center max-w-xl mx-auto"
                       >
-                        <motion.div {...stagedEntrance(0.04)} className="p-4 rounded-full bg-sky-500/10 border border-sky-500/20 inline-block animate-bounce">
-                          <CheckCircle2 size={32} className="text-sky-500" />
-                        </motion.div>
-                        <div className="space-y-1.5">
-                          <motion.h4 {...stagedEntrance(0.08)} className="text-xl md:text-2xl font-black uppercase tracking-wide text-sky-700">
-                            BRIEFING GERADO COM SUCESSO!
-                          </motion.h4>
-                          <motion.p {...stagedEntrance(0.14)} className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed font-medium">
-                            O diagnóstico estratégico do seu projeto foi estruturado de forma impecável. Escolha uma das vias corporativas para nos fazer chegar as suas diretrizes:
-                          </motion.p>
-                        </div>
+                        {!isSubmitted ? (
+                          <div className="w-full space-y-6">
+                            <div className="space-y-1.5">
+                              <motion.h4
+                                {...stagedEntrance(0.04)}
+                                className="text-xl md:text-2xl font-black uppercase tracking-wide text-slate-950"
+                              >
+                                Rever Pedido
+                              </motion.h4>
 
-                        <motion.div {...stagedEntrance(0.24)} className="flex flex-col sm:flex-row gap-3 w-full max-w-md justify-center items-stretch pt-2">
-                          {/* mailto */}
-                          <a
-                            href={generateMailtoLink()}
-                            className="flex-1 flex items-center justify-center space-x-2 px-6 py-4 rounded-xl bg-slate-900 text-white hover:bg-sky-600 hover:scale-[1.01] text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer shadow-md text-center decoration-none no-underline block"
-                          >
-                            <Mail size={12} />
-                            <span>Abrir E-mail</span>
-                          </a>
+                              <motion.p
+                                {...stagedEntrance(0.08)}
+                                className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed font-medium"
+                              >
+                                Confirme os dados antes de enviar o pedido à nossa equipa.
+                              </motion.p>
+                            </div>
 
-                          {/* Copy */}
-                          <button
-                            onClick={() => {
-                              const text = `Olá equipa AXION,
+                            <motion.div
+                              {...stagedEntrance(0.14)}
+                              className="w-full rounded-2xl border border-slate-200 bg-slate-50/60 overflow-hidden text-left"
+                            >
+                              <div className="p-5 space-y-5">
+                                <div>
+                                  <p className="text-[8px] font-mono uppercase tracking-widest text-slate-400 mb-1">
+                                    Papel na empresa
+                                  </p>
+                                  <p className="text-xs font-bold text-slate-900">
+                                    {quizOwner}
+                                  </p>
+                                </div>
 
-Gostaria de solicitar um orçamento para o desenvolvimento do ecossistema digital da minha marca. Abaixo estão os detalhes estratégicos do meu projeto recolhidos no portal:
+                                <div>
+                                  <p className="text-[8px] font-mono uppercase tracking-widest text-slate-400 mb-1">
+                                    Dimensão da operação
+                                  </p>
+                                  <p className="text-xs font-bold text-slate-900">
+                                    {quizSize}
+                                  </p>
+                                </div>
 
---------------------------------------------------
-DIAGNÓSTICO INICIAL (QUIZ):
---------------------------------------------------
-1. Papel na Empresa:
-   > ${quizOwner}
+                                <div>
+                                  <p className="text-[8px] font-mono uppercase tracking-widest text-slate-400 mb-1">
+                                    Objetivo do projeto
+                                  </p>
+                                  <p className="text-xs font-bold text-slate-900">
+                                    {quizObjective}
+                                  </p>
+                                </div>
 
-2. Dimensão da Operação:
-   > ${quizSize}
+                                <div>
+                                  <p className="text-[8px] font-mono uppercase tracking-widest text-slate-400 mb-2">
+                                    Serviços
+                                  </p>
 
-3. Objetivo do Projeto:
-   > ${quizObjective}
+                                  <div className="flex flex-wrap gap-2">
+                                    {quizServices.map((service) => (
+                                      <span
+                                        key={service}
+                                        className="px-3 py-1.5 rounded-full bg-white border border-slate-200 text-[9px] font-bold text-slate-700"
+                                      >
+                                        {service}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
 
-4. Áreas de Serviço Selecionadas:
-   ${quizServices.map((service) => `[x] ${service}`).join('\n   ')}
+                                <div>
+                                  <p className="text-[8px] font-mono uppercase tracking-widest text-slate-400 mb-1">
+                                    Budget previsto
+                                  </p>
+                                  <p className="text-xs font-bold text-slate-900">
+                                    {quizBudget}
+                                  </p>
+                                </div>
 
-5. Budget Previsto:
-   > ${quizBudget}
+                                {clientMessage.trim() && (
+                                  <div className="pt-4 border-t border-slate-200">
+                                    <p className="text-[8px] font-mono uppercase tracking-widest text-slate-400 mb-2">
+                                      Contexto adicional
+                                    </p>
+                                    <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap">
+                                      {clientMessage}
+                                    </p>
+                                  </div>
+                                )}
 
---------------------------------------------------
-DADOS DE CONTACTO:
---------------------------------------------------
-Nome / Marca: ${clientName}
-E-mail: ${clientEmail}
-Telefone: ${clientPhone || 'Não facultado'}
-Mensagem Adicional: ${clientMessage || 'Nenhuma'}
+                                <div className="pt-4 border-t border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                  <div>
+                                    <p className="text-[8px] font-mono uppercase tracking-widest text-slate-400 mb-1">
+                                      Nome / Empresa
+                                    </p>
+                                    <p className="text-xs font-bold text-slate-900">
+                                      {clientName}
+                                    </p>
+                                  </div>
 
---------------------------------------------------
-Briefing gerado automaticamente pelo portal interativo AXION.`;
-                              navigator.clipboard.writeText(text);
-                              setClipboardSuccess(true);
-                              setTimeout(() => setClipboardSuccess(false), 3000);
-                            }}
-                            className={`flex-1 flex items-center justify-center space-x-2 px-6 py-4 rounded-xl border transition-all duration-300 text-[9px] font-black uppercase tracking-wider cursor-pointer ${
-                              clipboardSuccess 
-                                ? 'border-sky-500 bg-sky-50 text-sky-700 font-bold'
-                                : 'border-slate-200 bg-white hover:border-slate-400 text-slate-800 shadow-xs'
-                            }`}
-                          >
-                            <Layers size={12} />
-                            <span>{clipboardSuccess ? "Copiado!" : "Copiar Briefing"}</span>
-                          </button>
-                        </motion.div>
+                                  <div>
+                                    <p className="text-[8px] font-mono uppercase tracking-widest text-slate-400 mb-1">
+                                      E-mail
+                                    </p>
+                                    <p className="text-xs font-bold text-slate-900 break-all">
+                                      {clientEmail}
+                                    </p>
+                                  </div>
 
-                        <motion.div {...stagedEntrance(0.32)} className="pt-2">
-                          <button
-                            onClick={() => {
-                              goToQuizStep(0);
-                              setQuizOwner('');
-                              setQuizObjective('');
-                              setQuizServices([]);
-                              setQuizBudget('');
-                              setClientName('');
-                              setClientEmail('');
-                              setClientPhone('');
-                              setClientMessage('');
-                            }}
-                            className="text-[8px] font-mono tracking-widest text-slate-400 hover:text-slate-900 uppercase cursor-pointer border-b border-transparent hover:border-slate-900 transition-all pb-0.5 font-bold"
-                          >
-                            Reiniciar Questionário
-                          </button>
-                        </motion.div>
+                                  {clientPhone.trim() && (
+                                    <div>
+                                      <p className="text-[8px] font-mono uppercase tracking-widest text-slate-400 mb-1">
+                                        Telefone
+                                      </p>
+                                      <p className="text-xs font-bold text-slate-900">
+                                        {clientPhone}
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </motion.div>
+
+                            {submitError && (
+                              <p
+                                role="alert"
+                                className="text-[10px] font-medium text-red-600 max-w-md mx-auto"
+                              >
+                                {submitError}
+                              </p>
+                            )}
+
+                            <motion.div
+                              {...stagedEntrance(0.22)}
+                              className="flex flex-col sm:flex-row gap-3 w-full justify-center"
+                            >
+                              <button
+                                type="button"
+                                disabled={isSubmitting}
+                                onClick={() => {
+                                  setSubmitError('');
+                                  goToQuizStep(5);
+                                }}
+                                className="flex-1 flex items-center justify-center px-6 py-4 rounded-xl border border-slate-200 bg-white hover:border-slate-400 text-slate-800 text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50"
+                              >
+                                Editar Dados
+                              </button>
+
+                              <button
+                                type="button"
+                                disabled={isSubmitting}
+                                onClick={handleSubmit}
+                                className="flex-1 flex items-center justify-center space-x-2 px-6 py-4 rounded-xl bg-slate-900 text-white hover:bg-sky-600 hover:scale-[1.01] text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                              >
+                                <Mail size={12} />
+                                <span>
+                                  {isSubmitting ? 'A enviar...' : 'Enviar Pedido'}
+                                </span>
+                              </button>
+                            </motion.div>
+                          </div>
+                        ) : (
+                          <div className="w-full space-y-6">
+                            <motion.div
+                              {...stagedEntrance(0.04)}
+                              className="p-4 rounded-full bg-sky-500/10 border border-sky-500/20 inline-block"
+                            >
+                              <CheckCircle2 size={32} className="text-sky-500" />
+                            </motion.div>
+
+                            <div className="space-y-2">
+                              <motion.h4
+                                {...stagedEntrance(0.08)}
+                                className="text-xl md:text-2xl font-black uppercase tracking-wide text-sky-700"
+                              >
+                                Pedido Enviado
+                              </motion.h4>
+
+                              <motion.p
+                                {...stagedEntrance(0.14)}
+                                className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed font-medium"
+                              >
+                                Recebemos o seu pedido. A equipa AXION irá analisar a informação e entrar em contacto consigo para aprofundarmos o projeto.
+                              </motion.p>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={resetQuiz}
+                              className="text-[8px] font-mono tracking-widest text-slate-400 hover:text-slate-900 uppercase cursor-pointer border-b border-transparent hover:border-slate-900 transition-all pb-0.5 font-bold"
+                            >
+                              Novo Pedido
+                            </button>
+                          </div>
+                        )}
                       </motion.div>
                     )}
 
@@ -1092,26 +1217,26 @@ Briefing gerado automaticamente pelo portal interativo AXION.`;
                   Canais Digitais
                 </h4>
                 <div className="flex items-center gap-2.5">
-                  <a 
-                    href="https://linkedin.com" 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
+                  <a
+                    href="https://linkedin.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="p-2.5 rounded-full bg-white/[0.04] border border-white/10 hover:border-sky-400/50 hover:text-sky-300 hover:bg-sky-400/10 transition-all duration-300 text-slate-400"
                   >
                     <Linkedin size={14} />
                   </a>
-                  <a 
-                    href="https://instagram.com" 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
+                  <a
+                    href="https://instagram.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="p-2.5 rounded-full bg-white/[0.04] border border-white/10 hover:border-sky-400/50 hover:text-sky-300 hover:bg-sky-400/10 transition-all duration-300 text-slate-400"
                   >
                     <Instagram size={14} />
                   </a>
-                  <a 
-                    href="https://github.com" 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
+                  <a
+                    href="https://github.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="p-2.5 rounded-full bg-white/[0.04] border border-white/10 hover:border-sky-400/50 hover:text-sky-300 hover:bg-sky-400/10 transition-all duration-300 text-slate-400"
                   >
                     <Globe size={14} />
