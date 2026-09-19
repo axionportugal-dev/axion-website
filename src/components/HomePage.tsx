@@ -4,14 +4,20 @@ import {
   ArrowLeft, 
   ArrowRight, 
   X,
-  ChevronLeft,
-  ChevronRight,
   ChevronDown
 } from 'lucide-react';
 import Logo from './Logo';
 import FloatingTriangles from './FloatingTriangles';
+import ServicesExperience from './home/ServicesExperience';
+import AxionParticleField from './home/AxionParticleField';
+import PortfolioExperience from './home/PortfolioExperience';
+import EvolutionSystemDiagram, {
+  type EvolutionStageKey,
+} from './home/EvolutionSystemDiagram';
+import SpaceBackdrop from './home/SpaceBackdrop';
 import { WebsiteFooterContent } from './WebsiteFooter';
 import { serviceAreas } from '../data/services';
+
 
 // Type-safe string paths for custom company logos uploaded to assets
 const revissantLogo = "/assets/revissant.png";
@@ -22,67 +28,191 @@ const auraBackground = new URL('../../assets/aurabackground.jpg', import.meta.ur
 const casasDoBecoBackground = new URL('../../assets/casasdobecovideo.mp4', import.meta.url).href;
 const heroBackground = new URL('../../assets/herobw.png', import.meta.url).href;
 
+
+
+
+
 interface HomePageProps {
   initialStep?: number;
+  isActive?: boolean;
   onBack: () => void;
   onNavigateToBudget: () => void;
   onNavigateToServices: () => void;
+  onNavigateToService: (slug: string) => void;
 }
 
-type PresencePhaseKey = 'inertia' | 'transition' | 'ascension';
 
-const presencePhases: Record<PresencePhaseKey, {
-  status: string;
+
+interface EvolutionStage {
+  id: string;
+  label: string;
+  eyebrow: string;
   title: string;
-  narrative: string;
-  metricLabel: string;
-  metricValue: string;
-  competitivePosition: string;
-  chartState: string;
-  chartPath: string;
-  chartEnd: { x: number; y: number };
-  consequence: string;
-}> = {
-  inertia: {
-    status: 'Risco de Estagnação',
-    title: 'O Custo Invisível de Recusar a Evolução',
-    narrative: 'Negócios que operam de forma puramente analógica ou com portais desatualizados estão a perder relevância a cada segundo. Ignorar a modernização digital não poupa recursos; drena silenciosamente a autoridade da marca. Sem um ecossistema tecnológico refinado, a sua empresa cede espaço precioso a concorrentes modernos e torna-se invisível para o cliente qualificado.',
-    metricLabel: 'Retenção',
-    metricValue: '-65%',
-    competitivePosition: 'Vulnerabilidade Máxima',
-    chartState: 'Fase Crítica',
-    chartPath: 'M10 20 L100 45 L200 80 L290 105',
-    chartEnd: { x: 290, y: 105 },
-    consequence: 'Ignorar a tecnologia leva a margens esmagadas e perda gradual de clientela. O negócio fica aprisionado no passado.',
+  body: string;
+  points: string[];
+}
+
+const evolutionStages: Record<
+  EvolutionStageKey,
+  EvolutionStage
+> = {
+  base: {
+    id: '01',
+    label: 'Base',
+    eyebrow:
+      'Antes da estrutura',
+    title:
+      'Quando o crescimento acontece sem estrutura, a operação perde clareza.',
+    body:
+      'À medida que uma empresa cresce, é natural acumular ferramentas, ficheiros, canais e processos. O problema surge quando cada peça funciona isoladamente. A informação dispersa-se, tarefas repetem-se e torna-se mais difícil compreender a operação como um todo.',
+    points: [
+      'Processos manuais',
+      'Informação dispersa',
+      'Ferramentas isoladas',
+      'Baixa visibilidade operacional',
+    ],
   },
-  transition: {
-    status: 'O Limbo do Genérico',
-    title: 'Estar Online não é o mesmo que Prosperar',
-    narrative: 'A maioria dos negócios comete o erro de se digitalizar utilizando templates genéricos, criadores de páginas pesados e soluções baratas. Isso cria uma presença estagnada que sobrevive no ruído da mediocridade. Sem performance instantânea e design que respira prestígio, o cliente entra, frustra-se com a lentidão e abandona o site. É o limbo do investimento desperdiçado.',
-    metricLabel: 'Abandono',
-    metricValue: '75%',
-    competitivePosition: 'Margens Comprimidas',
-    chartState: 'Platô Estagnado',
-    chartPath: 'M10 80 L100 82 L200 78 L290 81',
-    chartEnd: { x: 290, y: 81 },
-    consequence: 'Fórmulas prontas e sites amadores geram desperdício de publicidade e custos elevados de aquisição (CAC).',
+
+  structure: {
+    id: '02',
+    label: 'Estrutura',
+    eyebrow:
+      'Construir uma base',
+    title:
+      'A tecnologia começa a trabalhar a favor do negócio.',
+    body:
+      'A evolução não passa por substituir tudo. Passa por compreender o que já funciona, preservar aquilo que define a empresa e ligar as peças certas. Sistemas de gestão, websites, inventário, dados, clientes e operação podem passar a funcionar como partes de uma estrutura coerente.',
+    points: [
+      'Sistemas integrados',
+      'Fluxos mais claros',
+      'Informação centralizada',
+      'Controlo e segurança',
+    ],
   },
-  ascension: {
-    status: 'Liderança de Mercado',
-    title: 'A Tecnologia como o Maior Ativo de Escala',
-    narrative: 'Para prosperar, o seu negócio precisa de adotar a engenharia digital de elite. Portais desenvolvidos sob medida que carregam em menos de 0.8s, micro-interações fluidas e uma narrativa de luxo estabelecem autoridade automática. A tecnologia avançada não é apenas uma ferramenta — é o funil que atrai leads de alto valor e multiplica as margens de lucro de forma exponencial.',
-    metricLabel: 'Fidelidade',
-    metricValue: '+85%',
-    competitivePosition: 'Preços Premium Autorizados',
-    chartState: 'Crescimento Exponencial',
-    chartPath: 'M10 100 L100 85 L200 45 L290 10',
-    chartEnd: { x: 290, y: 10 },
-    consequence: 'A engenharia customizada permite escalar as vendas com custo marginal zero, atraindo o cliente ideal e perpetuando a prosperidade comercial.',
+
+  evolution: {
+    id: '03',
+    label: 'Evolução',
+    eyebrow:
+      'Tecnologia como alavanca',
+    title:
+      'Com estrutura, a tecnologia torna-se uma alavanca de evolução.',
+    body:
+      'Quando a base está preparada, novas capacidades deixam de acrescentar complexidade e começam a multiplicar valor. Automação, plataformas internas, análise de dados e inteligência artificial podem apoiar equipas, acelerar decisões e abrir novas possibilidades sem descaracterizar a identidade ou a visão do negócio.',
+    points: [
+      'Automação inteligente',
+      'Sistemas à medida',
+      'Dados acionáveis',
+      'AI integrada nos processos',
+      'Escala com controlo',
+    ],
   },
 };
 
-export default function HomePage({ initialStep = 0, onBack, onNavigateToBudget, onNavigateToServices }: HomePageProps) {
+const transitionEase = [0.16, 1, 0.3, 1] as const;
+
+const clamp01 = (value: number) =>
+  Math.min(1, Math.max(0, value));
+
+const rangeProgress = (
+  value: number,
+  start: number,
+  end: number,
+) => {
+  if (end === start) return value >= end ? 1 : 0;
+
+  return clamp01((value - start) / (end - start));
+};
+
+
+const smoothstep = (
+  value: number,
+) => {
+  const t = clamp01(value);
+
+  return (
+    t *
+    t *
+    (3 - 2 * t)
+  );
+};
+export default function HomePage({
+  initialStep = 0,
+  onBack,
+  isActive = true,
+  onNavigateToBudget,
+  onNavigateToServices,
+  onNavigateToService,
+}: HomePageProps) {
   const [step, setStep] = useState(initialStep);
+
+  const heroLogoRef = useRef<HTMLDivElement | null>(null);
+
+  const servicesArrivalLockRef = useRef(false);
+
+  const servicesWheelIdleTimerRef = useRef<number | null>(null);
+
+  const portfolioReturnLockRef = useRef(false);
+
+  const sectionWheelAccumulatorRef = useRef(0);
+  const sectionWheelDirectionRef = useRef(0);
+  const sectionWheelLockedRef = useRef(false);
+  const sectionWheelIdleTimerRef = useRef<number | null>(null);
+
+
+  const portfolioArrivalLockRef =
+    useRef(false);
+
+  const portfolioArrivalIdleTimerRef =
+    useRef<number | null>(null);
+  const portfolioReturnIdleTimerRef =
+    useRef<number | null>(null);
+
+  const initialHeroServicesProgress =
+    initialStep === 1 ? 1 : 0;
+
+  const [heroServicesProgress, setHeroServicesProgress] =
+    useState(initialHeroServicesProgress);
+
+  const heroServicesProgressRef = useRef(
+    initialHeroServicesProgress,
+  );
+
+  const initialServicesPortfolioProgress =
+    initialStep >= 2 ? 1 : 0;
+
+  const [
+    servicesPortfolioProgress,
+    setServicesPortfolioProgress,
+  ] = useState(
+    initialServicesPortfolioProgress,
+  );
+
+  const servicesPortfolioProgressRef =
+    useRef(
+      initialServicesPortfolioProgress,
+    );
+
+  const updateServicesPortfolioProgress = (
+    value: number,
+  ) => {
+    const nextValue =
+      clamp01(value);
+
+    servicesPortfolioProgressRef.current =
+      nextValue;
+
+    setServicesPortfolioProgress(
+      nextValue,
+    );
+  };
+
+  const updateHeroServicesProgress = (value: number) => {
+  const nextValue = clamp01(value);
+
+    heroServicesProgressRef.current = nextValue;
+    setHeroServicesProgress(nextValue);
+  };
   
   // Pop-up states for Liquid Glass capabilities description (Light mode, clean glass)
   const [activePopupIdx, setActivePopupIdx] = useState<number | null>(null);
@@ -93,34 +223,72 @@ export default function HomePage({ initialStep = 0, onBack, onNavigateToBudget, 
   // Footer reveal after an additional scroll beyond the final homepage section
   const [isFooterVisible, setIsFooterVisible] = useState(false);
 
-  // Active tab for the dynamic Brand Strategic Blueprint (Step 3)
-  const [activeDiagTab, setActiveDiagTab] = useState<PresencePhaseKey>('ascension');
-  const activePresencePhase = presencePhases[activeDiagTab];
+  const [
+    activeEvolutionStage,
+    setActiveEvolutionStage,
+  ] = useState<EvolutionStageKey>(
+    'base',
+  );
+
+  const currentEvolutionStage =
+    evolutionStages[
+      activeEvolutionStage
+    ];
 
   // Mouse coordinate tracking for advanced 3D logo parallax depth
   const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
 
   // Debouncing locks to make scrolling snappy and instant
   const isAnimatingRef = useRef(false);
-  const touchpadHorizontalAccumulator = useRef(0);
+
+  // Portfolio horizontal trackpad gesture state.
+  // One physical swipe must move exactly one project.
+  const portfolioHorizontalAccumulatorRef = useRef(0);
+  const portfolioHorizontalDirectionRef = useRef(0);
+  const portfolioHorizontalLockedRef = useRef(false);
+  const portfolioHorizontalIdleTimerRef = useRef<number | null>(null);
+
   const touchStartY = useRef(0);
   const touchStartX = useRef(0);
 
   // Checks if the active state requires a dark background
-  const isDarkBg = step === 0 || step === 2 || step === 3 || step === 4;
+  const isDarkBg =
+  step === 0 ||
+  step === 1 ||
+  step === 2 ||
+  step === 4;
   // Checks if the current visible overlay/view requires dark-mode headers/dots
-  const isVisualDark = step === 0 || step === 2 || step === 4;
+  const isVisualDark =
+  step === 0 ||
+  step === 1 ||
+  step === 2 ||
+  step === 4;
 
   useEffect(() => {
+    if (!isActive) {
+      return;
+    }
+
     const handleMouseMove = (e: MouseEvent) => {
       // Create subtle parallax offsets for background elements
       const x = (e.clientX - window.innerWidth / 2) * 0.03;
       const y = (e.clientY - window.innerHeight / 2) * 0.03;
+
       setMouseOffset({ x, y });
     };
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
+
+    window.addEventListener(
+      'mousemove',
+      handleMouseMove,
+    );
+
+    return () => {
+      window.removeEventListener(
+        'mousemove',
+        handleMouseMove,
+      );
+    };
+  }, [isActive]);
 
   // Background giant watermark logo style mapped per step + mouse offset
   const getWatermarkStyle = () => {
@@ -168,17 +336,138 @@ export default function HomePage({ initialStep = 0, onBack, onNavigateToBudget, 
     if (activePopupIdx !== null) return;
     if (isAnimatingRef.current) return;
 
-    if (step < 4) {
+    if (step === 0) {
       lockAnimation();
       setIsFooterVisible(false);
-      setStep(step + 1);
+      updateHeroServicesProgress(1);
+      updateServicesPortfolioProgress(0);
+      setStep(1);
       return;
     }
 
-    if (!isFooterVisible) {
+    if (step === 1) {
+      lockAnimation();
+      updateHeroServicesProgress(1);
+      updateServicesPortfolioProgress(1);
+      setIsFooterVisible(false);
+      setStep(2);
+      return;
+    }
+
+    if (step === 2) {
+      lockAnimation();
+      updateHeroServicesProgress(1);
+      updateServicesPortfolioProgress(1);
+      setIsFooterVisible(false);
+      setStep(3);
+      return;
+    }
+
+    if (step === 3) {
+      lockAnimation();
+      setIsFooterVisible(false);
+      setStep(4);
+      return;
+    }
+
+    if (step === 4 && !isFooterVisible) {
       lockAnimation();
       setIsFooterVisible(true);
     }
+  };
+
+  const keepServicesArrivalLocked = () => {
+    servicesArrivalLockRef.current = true;
+
+    if (
+      servicesWheelIdleTimerRef.current !== null
+    ) {
+      window.clearTimeout(
+        servicesWheelIdleTimerRef.current,
+      );
+    }
+
+    servicesWheelIdleTimerRef.current =
+      window.setTimeout(() => {
+        servicesArrivalLockRef.current = false;
+        servicesWheelIdleTimerRef.current = null;
+      }, 260);
+  };
+
+  const keepPortfolioReturnLocked = () => {
+    portfolioReturnLockRef.current = true;
+
+    if (
+      portfolioReturnIdleTimerRef.current !== null
+    ) {
+      window.clearTimeout(
+        portfolioReturnIdleTimerRef.current,
+      );
+    }
+
+    portfolioReturnIdleTimerRef.current =
+      window.setTimeout(() => {
+        portfolioReturnLockRef.current = false;
+        portfolioReturnIdleTimerRef.current = null;
+      }, 280);
+  };
+
+  const keepPortfolioArrivalLocked =
+    () => {
+      portfolioArrivalLockRef.current =
+        true;
+
+      if (
+        portfolioArrivalIdleTimerRef.current !==
+        null
+      ) {
+        window.clearTimeout(
+          portfolioArrivalIdleTimerRef.current,
+        );
+      }
+
+      portfolioArrivalIdleTimerRef.current =
+        window.setTimeout(() => {
+          portfolioArrivalLockRef.current =
+            false;
+
+          portfolioArrivalIdleTimerRef.current =
+            null;
+        }, 280);
+    };
+
+  const keepSectionWheelGestureLockedUntilIdle = () => {
+    if (sectionWheelIdleTimerRef.current !== null) {
+      window.clearTimeout(sectionWheelIdleTimerRef.current);
+    }
+
+    sectionWheelIdleTimerRef.current =
+      window.setTimeout(() => {
+        sectionWheelAccumulatorRef.current = 0;
+        sectionWheelDirectionRef.current = 0;
+        sectionWheelLockedRef.current = false;
+        sectionWheelIdleTimerRef.current = null;
+      }, 280);
+  };
+
+  const navigateDirectlyToStep = (targetStep: number) => {
+    setIsFooterVisible(false);
+
+    if (targetStep === 0) {
+      updateHeroServicesProgress(0);
+      updateServicesPortfolioProgress(0);
+    } else if (targetStep === 1) {
+      updateHeroServicesProgress(1);
+      updateServicesPortfolioProgress(0);
+    } else {
+      // Portfolio and every later section live after the complete
+      // Services -> Portfolio morph. Direct navigation must open
+      // the fully formed Portfolio state, never the beginning.
+      updateHeroServicesProgress(1);
+      updateServicesPortfolioProgress(1);
+    }
+
+    setStep(targetStep);
   };
 
   const prevStep = () => {
@@ -191,9 +480,50 @@ export default function HomePage({ initialStep = 0, onBack, onNavigateToBudget, 
       return;
     }
 
-    if (step > 0) {
+    if (step === 1) {
       lockAnimation();
-      setStep(step - 1);
+
+      servicesArrivalLockRef.current = false;
+
+      if (servicesWheelIdleTimerRef.current !== null) {
+        window.clearTimeout(
+          servicesWheelIdleTimerRef.current,
+        );
+        servicesWheelIdleTimerRef.current = null;
+      }
+
+      updateHeroServicesProgress(0);
+      updateServicesPortfolioProgress(0);
+      setStep(0);
+      return;
+    }
+
+    if (step === 2) {
+      lockAnimation();
+      updateHeroServicesProgress(1);
+      updateServicesPortfolioProgress(0);
+      keepPortfolioReturnLocked();
+      setIsFooterVisible(false);
+      setStep(1);
+      return;
+    }
+
+    // Evolution -> Portfolio must always restore the finished
+    // Portfolio. The section-wheel lock remains active until the
+    // physical gesture is idle, absorbing leftover upward momentum.
+    if (step === 3) {
+      lockAnimation();
+      updateHeroServicesProgress(1);
+      updateServicesPortfolioProgress(1);
+      setIsFooterVisible(false);
+      setStep(2);
+      return;
+    }
+
+    if (step === 4) {
+      lockAnimation();
+      setIsFooterVisible(false);
+      setStep(3);
     }
   };
 
@@ -205,43 +535,591 @@ export default function HomePage({ initialStep = 0, onBack, onNavigateToBudget, 
   };
 
   // Portfolio Slide helpers
+  // Project navigation must not share the global section-animation lock.
+  // The horizontal gesture state machine already guarantees one project
+  // per physical swipe, while buttons/dots should remain immediately usable.
   const nextProject = () => {
-    if (isAnimatingRef.current) return;
-    lockAnimation();
     setActiveProjectIdx((prev) => (prev + 1) % 3);
   };
 
   const prevProject = () => {
-    if (isAnimatingRef.current) return;
-    lockAnimation();
     setActiveProjectIdx((prev) => (prev - 1 + 3) % 3);
   };
 
   // High-End touchpad swipe & vertical scroll state machine
   useEffect(() => {
+    if (!isActive) {
+      return;
+    }
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault(); // prevent standard browser viewport scroll jump
 
-      // 1. Detect Sideways/Horizontal Trackpad Gestures (Sideways Touchpad movement)
-      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
-        if (step !== 2) return; // Slider only lives in Portfólio (Step 2)
-        
-        touchpadHorizontalAccumulator.current += e.deltaX;
-        
-        // Threshold to trigger page slide on high-end touchpad swipe
-        if (Math.abs(touchpadHorizontalAccumulator.current) > 35) {
-          if (touchpadHorizontalAccumulator.current > 0) {
-            nextProject();
-          } else {
-            prevProject();
-          }
-          touchpadHorizontalAccumulator.current = 0; // Reset accumulator immediately
+
+      /*
+      * EVOLUTION + BUDGET
+      *
+      * Treat a trackpad gesture as ONE navigation intent.
+      * Small movements are accumulated instead of changing
+      * section immediately.
+      *
+      * After a section change, all remaining inertial wheel
+      * events are absorbed until the trackpad becomes idle.
+      */
+      if (step === 3 || step === 4) {
+        // Ignore predominantly horizontal gestures here.
+        if (
+          Math.abs(e.deltaX) >
+          Math.abs(e.deltaY)
+        ) {
+          return;
         }
+
+        if (
+          Math.abs(e.deltaY) < 0.5
+        ) {
+          return;
+        }
+
+        const direction =
+          Math.sign(e.deltaY);
+
+        /*
+        * If the user reverses direction during the gesture,
+        * start measuring the new intention from zero.
+        */
+        if (
+          sectionWheelDirectionRef.current !== 0 &&
+          direction !==
+            sectionWheelDirectionRef.current
+        ) {
+          sectionWheelAccumulatorRef.current =
+            0;
+        }
+
+        sectionWheelDirectionRef.current =
+          direction;
+
+        /*
+        * Every wheel event postpones the "gesture ended"
+        * moment. This is what absorbs macOS trackpad momentum.
+        */
+        keepSectionWheelGestureLockedUntilIdle();
+
+        /*
+        * A section was already changed during this gesture.
+        * Consume the remaining momentum.
+        */
+        if (
+          sectionWheelLockedRef.current
+        ) {
+          return;
+        }
+
+        /*
+        * Clamp each event.
+        *
+        * Safari can occasionally emit a very large delta,
+        * which should not count as an entire gesture by itself.
+        */
+        const normalizedDelta =
+          Math.sign(e.deltaY) *
+          Math.min(
+            Math.abs(e.deltaY),
+            32,
+          );
+
+        sectionWheelAccumulatorRef.current +=
+          normalizedDelta;
+
+        /*
+        * Require a deliberate gesture.
+        */
+        const SECTION_CHANGE_THRESHOLD =
+          150;
+
+        if (
+          Math.abs(
+            sectionWheelAccumulatorRef.current,
+          ) <
+          SECTION_CHANGE_THRESHOLD
+        ) {
+          return;
+        }
+
+        sectionWheelLockedRef.current =
+          true;
+
+        sectionWheelAccumulatorRef.current =
+          0;
+
+        if (direction > 0) {
+          nextStep();
+        } else {
+          prevStep();
+        }
+
         return;
       }
 
-      // 2. Vertical Scrolling Gestures (Sections State Transition)
+      // 1. Horizontal Portfolio trackpad gestures.
+      // One physical swipe can emit dozens of wheel events on macOS.
+      // We accumulate them, move exactly one project and keep the
+      // gesture locked until the momentum is completely idle.
+      if (
+        step === 2 &&
+        servicesPortfolioProgressRef.current >= 0.999 &&
+        Math.abs(e.deltaX) >
+          Math.abs(e.deltaY) * 0.72
+      ) {
+        if (Math.abs(e.deltaX) < 0.5) return;
+
+        const horizontalDirection = Math.sign(e.deltaX);
+
+        if (
+          portfolioHorizontalDirectionRef.current !== 0 &&
+          horizontalDirection !==
+            portfolioHorizontalDirectionRef.current
+        ) {
+          portfolioHorizontalAccumulatorRef.current = 0;
+        }
+
+        portfolioHorizontalDirectionRef.current =
+          horizontalDirection;
+
+        if (
+          portfolioHorizontalIdleTimerRef.current !== null
+        ) {
+          window.clearTimeout(
+            portfolioHorizontalIdleTimerRef.current,
+          );
+        }
+
+        portfolioHorizontalIdleTimerRef.current =
+          window.setTimeout(() => {
+            portfolioHorizontalAccumulatorRef.current = 0;
+            portfolioHorizontalDirectionRef.current = 0;
+            portfolioHorizontalLockedRef.current = false;
+            portfolioHorizontalIdleTimerRef.current = null;
+          }, 150);
+
+        if (portfolioHorizontalLockedRef.current) return;
+
+        const normalizedHorizontalDelta =
+          horizontalDirection *
+          Math.min(Math.abs(e.deltaX), 26);
+
+        portfolioHorizontalAccumulatorRef.current +=
+          normalizedHorizontalDelta;
+
+        const PROJECT_SWIPE_THRESHOLD = 72;
+
+        if (
+          Math.abs(
+            portfolioHorizontalAccumulatorRef.current,
+          ) < PROJECT_SWIPE_THRESHOLD
+        ) {
+          return;
+        }
+
+        portfolioHorizontalLockedRef.current = true;
+        portfolioHorizontalAccumulatorRef.current = 0;
+
+        if (horizontalDirection > 0) {
+          nextProject();
+        } else {
+          prevProject();
+        }
+
+        return;
+      }
+
+      // 2. Continuous Hero <-> Services <-> Portfolio transitions
+      if (
+        step === 0 ||
+        step === 1 ||
+        step === 2
+      ) {
+        if (
+          Math.abs(e.deltaY) < 0.5
+        ) {
+          return;
+        }
+
+        const heroProgress =
+          heroServicesProgressRef.current;
+
+        const portfolioProgress =
+          servicesPortfolioProgressRef.current;
+
+        // If we have just returned from Evolution, absorb the rest
+        // of that same upward physical gesture. Without this guard,
+        // residual momentum immediately rewinds Portfolio to Services.
+        if (
+          step === 2 &&
+          sectionWheelLockedRef.current &&
+          Math.abs(e.deltaY) >= Math.abs(e.deltaX)
+        ) {
+          keepSectionWheelGestureLockedUntilIdle();
+          return;
+        }
+
+        const heroSensitivity =
+          0.00135;
+
+        const portfolioSensitivity =
+          0.00115;
+
+        /*
+        * HERO -> SERVICES
+        */
+        if (
+          step === 0 &&
+          e.deltaY > 0
+        ) {
+          const nextProgress =
+            clamp01(
+              heroProgress +
+                e.deltaY *
+                  heroSensitivity,
+            );
+
+          updateHeroServicesProgress(
+            nextProgress,
+          );
+
+          if (
+            nextProgress >= 0.999
+          ) {
+            updateHeroServicesProgress(
+              1,
+            );
+
+            updateServicesPortfolioProgress(
+              0,
+            );
+
+            keepServicesArrivalLocked();
+
+            setIsFooterVisible(false);
+            setStep(1);
+          }
+
+          return;
+        }
+
+        /*
+        * HERO reverse while the logo is still
+        * reconstructing.
+        */
+        if (
+          step === 0 &&
+          e.deltaY < 0 &&
+          heroProgress > 0
+        ) {
+          const nextProgress =
+            clamp01(
+              heroProgress +
+                e.deltaY *
+                  heroSensitivity,
+            );
+
+          updateHeroServicesProgress(
+            nextProgress,
+          );
+
+          return;
+        }
+
+        /*
+        * SERVICES -> PORTFOLIO
+        *
+        * The same scroll now morphs:
+        *
+        * sphere -> cloud
+        */
+        if (
+          step === 1 &&
+          e.deltaY > 0 &&
+          heroProgress >= 0.999
+        ) {
+          /*
+          * Absorb momentum left over from Hero -> Services.
+          */
+          if (
+            servicesArrivalLockRef.current &&
+            portfolioProgress <= 0.001
+          ) {
+            keepServicesArrivalLocked();
+            return;
+          }
+
+          const nextProgress =
+            clamp01(
+              portfolioProgress +
+                e.deltaY *
+                  portfolioSensitivity,
+            );
+
+          updateServicesPortfolioProgress(
+            nextProgress,
+          );
+
+          if (
+            nextProgress >= 0.999
+          ) {
+            updateServicesPortfolioProgress(
+              1,
+            );
+
+            keepPortfolioArrivalLocked();
+
+            setIsFooterVisible(false);
+            setStep(2);
+          }
+
+          return;
+        }
+
+        /*
+        * User started Services -> Portfolio but reverses
+        * before reaching Portfolio.
+        *
+        * cloud -> sphere
+        */
+        if (
+          step === 1 &&
+          e.deltaY < 0 &&
+          portfolioProgress > 0
+        ) {
+          const nextProgress =
+            clamp01(
+              portfolioProgress +
+                e.deltaY *
+                  portfolioSensitivity,
+            );
+
+          updateServicesPortfolioProgress(
+            nextProgress,
+          );
+
+          return;
+        }
+
+        /*
+        * SERVICES -> HERO
+        *
+        * Only possible after the sphere is fully restored.
+        */
+        if (
+          step === 1 &&
+          e.deltaY < 0 &&
+          portfolioProgress <= 0.001
+        ) {
+          /*
+          * We have just returned from Portfolio.
+          *
+          * Remaining upward momentum cannot send us
+          * directly through Services and into Hero.
+          */
+          if (
+            portfolioReturnLockRef.current
+          ) {
+            keepPortfolioReturnLocked();
+            return;
+          }
+
+          servicesArrivalLockRef.current =
+            false;
+
+          if (
+            servicesWheelIdleTimerRef.current !==
+            null
+          ) {
+            window.clearTimeout(
+              servicesWheelIdleTimerRef.current,
+            );
+
+            servicesWheelIdleTimerRef.current =
+              null;
+          }
+
+          const nextProgress =
+            clamp01(
+              heroProgress +
+                e.deltaY *
+                  heroSensitivity,
+            );
+
+          setStep(0);
+          setIsFooterVisible(false);
+
+          updateHeroServicesProgress(
+            nextProgress,
+          );
+
+          return;
+        }
+
+        /*
+        * PORTFOLIO -> SERVICES
+        *
+        * Reverse the exact same morph:
+        *
+        * cloud -> sphere
+        *
+        * We intentionally KEEP step === 2 while this is
+        * happening so the transition remains visually
+        * continuous.
+        */
+        if (
+          step === 2 &&
+          e.deltaY < 0
+        ) {
+          /*
+          * If we just arrived in Portfolio from Services,
+          * an intentional reverse gesture should be allowed.
+          */
+          portfolioArrivalLockRef.current =
+            false;
+
+          if (
+            portfolioArrivalIdleTimerRef.current !==
+            null
+          ) {
+            window.clearTimeout(
+              portfolioArrivalIdleTimerRef.current,
+            );
+
+            portfolioArrivalIdleTimerRef.current =
+              null;
+          }
+
+          const nextProgress =
+            clamp01(
+              portfolioProgress +
+                e.deltaY *
+                  portfolioSensitivity,
+            );
+
+          updateServicesPortfolioProgress(
+            nextProgress,
+          );
+
+          if (
+            nextProgress <= 0.001
+          ) {
+            updateServicesPortfolioProgress(
+              0,
+            );
+
+            updateHeroServicesProgress(
+              1,
+            );
+
+            keepPortfolioReturnLocked();
+
+            setIsFooterVisible(false);
+            setStep(1);
+          }
+
+          return;
+        }
+
+        /*
+        * User reverses direction again while still in the
+        * Portfolio -> Services transition.
+        *
+        * sphere -> cloud again.
+        */
+        if (
+          step === 2 &&
+          e.deltaY > 0 &&
+          portfolioProgress < 0.999
+        ) {
+          const nextProgress =
+            clamp01(
+              portfolioProgress +
+                e.deltaY *
+                  portfolioSensitivity,
+            );
+
+          updateServicesPortfolioProgress(
+            nextProgress,
+          );
+
+          return;
+        }
+
+        /*
+         * PORTFOLIO is fully formed.
+         *
+         * Once the cards are usable, small vertical trackpad noise
+         * must not immediately throw the user into Evolution. First
+         * absorb the momentum that completed Services -> Portfolio,
+         * then require a deliberate new downward gesture.
+         */
+        if (
+          step === 2 &&
+          e.deltaY > 0 &&
+          portfolioProgress >= 0.999
+        ) {
+          /*
+           * Do not interpret a diagonal horizontal carousel gesture
+           * as an attempt to leave Portfolio.
+           */
+          if (
+            Math.abs(e.deltaY) <=
+            Math.abs(e.deltaX) * 1.35
+          ) {
+            return;
+          }
+
+          if (portfolioArrivalLockRef.current) {
+            keepPortfolioArrivalLocked();
+            return;
+          }
+
+          if (
+            sectionWheelDirectionRef.current !== 0 &&
+            sectionWheelDirectionRef.current !== 1
+          ) {
+            sectionWheelAccumulatorRef.current = 0;
+          }
+
+          sectionWheelDirectionRef.current = 1;
+          keepSectionWheelGestureLockedUntilIdle();
+
+          if (sectionWheelLockedRef.current) return;
+
+          const normalizedDelta =
+            Math.min(Math.abs(e.deltaY), 22);
+
+          sectionWheelAccumulatorRef.current +=
+            normalizedDelta;
+
+          const PORTFOLIO_EXIT_THRESHOLD = 300;
+
+          if (
+            sectionWheelAccumulatorRef.current <
+            PORTFOLIO_EXIT_THRESHOLD
+          ) {
+            return;
+          }
+
+          sectionWheelLockedRef.current = true;
+          sectionWheelAccumulatorRef.current = 0;
+
+          nextStep();
+          return;
+        }
+
+        return;
+      }
+      
+
+      // 3. Existing discrete navigation for the remaining sections
       if (Math.abs(e.deltaY) < 12) return;
+
       if (e.deltaY > 0) {
         nextStep();
       } else {
@@ -317,13 +1195,89 @@ export default function HomePage({ initialStep = 0, onBack, onNavigateToBudget, 
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [step, activePopupIdx, activeProjectIdx, isFooterVisible]);
+  }, [isActive, step, activePopupIdx, activeProjectIdx, isFooterVisible]);
 
   // Section names for the interactive side tracker
-  const sectionLabels = ["Início", "Serviços", "Portfólio", "Presença", "Orçamento"];
+  const sectionLabels = ["Início", "Serviços", "Portfólio", "Evolução", "Orçamento"];
 
   // Capabilities details structure for the Liquid Glass Popup Modals
   const capabilitiesData = serviceAreas;
+
+
+  const particleMorphProgress = rangeProgress(
+    heroServicesProgress,
+    0.06,
+    0.96,
+  );
+
+  const particleCanvasTakeover = rangeProgress(
+    heroServicesProgress,
+    0.01,
+    0.05,
+  );
+
+  const heroDarkenProgress = rangeProgress(
+    heroServicesProgress,
+    0.18,
+    0.88,
+  );
+
+  /*
+  * SERVICES CONTENT
+  *
+  * 0.00 -> fully visible
+  * 0.02 -> starts leaving
+  * 0.18 -> completely gone
+  *
+  * The particle sphere does NOT start morphing before 0.18.
+  */
+  const servicesExitProgress =
+    smoothstep(
+      rangeProgress(
+        servicesPortfolioProgress,
+        0.02,
+        0.18,
+      ),
+    );
+
+  const servicesContentOpacity =
+    1 - servicesExitProgress;
+
+  const servicesContentScale =
+    1 -
+    servicesExitProgress * 0.025;
+
+
+  /*
+  * PORTFOLIO CONTENT
+  *
+  * The cloud is fully formed at progress 0.82.
+  * Only after that does the Portfolio UI enter.
+  *
+  * Reverse scroll automatically means:
+  * Portfolio UI leaves before the cloud contracts.
+  */
+  const portfolioEnterProgress =
+    smoothstep(
+      rangeProgress(
+        servicesPortfolioProgress,
+        0.82,
+        0.98,
+      ),
+    );
+
+  const portfolioContentOpacity =
+    portfolioEnterProgress;
+
+  const portfolioContentScale =
+    0.97 +
+    portfolioEnterProgress *
+      0.03;
+
+  const portfolioContentY =
+    (1 -
+      portfolioEnterProgress) *
+    18;
 
   // Portfolio projects data featuring official uploaded logos and fast high-end sample looping videos from Google Storage CDN
   const portfolioProjects = [
@@ -363,70 +1317,74 @@ export default function HomePage({ initialStep = 0, onBack, onNavigateToBudget, 
   ];
 
   return (
-    <div 
+    <main
       className={`relative w-full h-screen bg-white transition-colors duration-300 overflow-hidden select-none ${
         isDarkBg ? 'text-white' : 'text-slate-900'
       }`}
     >
 
-      {/* Independent backdrop prevents slate-blue flashes while sections crossfade. */}
+      
+      {/* Persistent base background for Hero, Services and Portfolio */}
       <AnimatePresence initial={false}>
         {isDarkBg && (
           <motion.div
-            key={step === 0 ? 'hero-background-base' : 'dark-section-background-base'}
+            key={
+              step <= 2
+                ? 'hero-services-portfolio-background-base'
+                : 'dark-section-background-base'
+            }
             className={`absolute inset-0 z-0 pointer-events-none ${
-              step === 0 ? 'bg-black' : 'bg-slate-950'
+              step <= 2
+                ? 'bg-[#010103]'
+                : 'bg-slate-950'
             }`}
-            initial={{ opacity: 0 }}
+            initial={{ opacity: 1 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            transition={{
+              duration: 0.45,
+              ease: [0.16, 1, 0.3, 1],
+            }}
           />
         )}
       </AnimatePresence>
-      
-      {/* PERSISTENT FLOATING TRIANGLES */}
-      {step !== 0 && (
-        <div className="fixed inset-0 z-0 pointer-events-none">
-          <FloatingTriangles theme={isDarkBg ? "dark" : "light"} />
+
+      {/* Shared persistent sideral scene for Services + Portfolio */}
+      {(step === 1 || step === 2) && (
+        <div className="absolute inset-0 z-[1] pointer-events-none">
+          <SpaceBackdrop />
         </div>
       )}
 
-      {/* STRICT ELEGANT BLUE AND WHITE radial illumination backdrop */}
-      {isDarkBg && step !== 0 && (
-        <div 
-          className="absolute rounded-full blur-[140px] opacity-45 bg-radial from-sky-500/20 via-sky-400/5 to-transparent shadow-[0_0_200px_rgba(56,189,248,0.1)] pointer-events-none transition-all duration-1000" 
-          style={{ 
-            width: '700px', 
-            height: '700px', 
-            top: '50%', 
-            left: '50%', 
-            transform: 'translate(-50%, -50%)',
-            zIndex: 1
-          }} 
+      {/* Budget deliberately stays calm and minimal.
+          No triangles, giant watermark or decorative objects here. */}
+      {step === 4 && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-[1]"
+          style={{
+            background:
+              'radial-gradient(circle at 50% 47%, rgba(14,165,233,0.055) 0%, rgba(14,165,233,0.018) 22%, transparent 46%), linear-gradient(180deg, rgba(2,6,23,0) 0%, rgba(2,6,23,0.18) 100%)',
+          }}
         />
       )}
 
-      {/* 3D PARALLAX BACKDROP WATERMARK LOGO */}
-      {step !== 0 && (
-        <motion.div
-          className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none select-none overflow-hidden"
-          animate={getWatermarkStyle()}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        >
-          <Logo theme={isDarkBg ? "dark" : "light"} glow={false} className="w-96 h-96" />
-        </motion.div>
-      )}
-
       {/* TRANSPARENT MINIMALIST HEADER */}
-      <header className="fixed top-0 left-0 w-full z-50 px-8 py-6 flex items-center justify-between border-b border-transparent bg-transparent select-none pointer-events-auto">
+      <header
+        className={`fixed top-0 left-0 w-full z-50 px-5 py-5 sm:px-6 md:px-8 md:py-6 flex items-center justify-between select-none pointer-events-none transition-colors duration-300 ${
+          step === 3
+            ? 'border-b border-slate-900/10 bg-[#f7f7f4]/95 backdrop-blur-xl lg:border-transparent lg:bg-transparent lg:backdrop-blur-none'
+            : 'border-b border-transparent bg-transparent'
+        }`}
+      >
         {/* Left Side: Brand Logo & Text */}
-        <div
-          className="flex items-center space-x-3 cursor-pointer"
+        <button
+          type="button"
+          className="pointer-events-auto inline-flex items-center space-x-3 cursor-pointer focus:outline-none"
           onClick={() => {
-            setIsFooterVisible(false);
-            setStep(0);
+            navigateDirectlyToStep(0);
           }}
+          aria-label="Voltar ao início"
         >
           <Logo theme={isVisualDark ? "dark" : "light"} glow={isVisualDark} className="w-5 h-5" />
           <span className={`text-xs font-black tracking-[0.3em] uppercase ${
@@ -434,45 +1392,80 @@ export default function HomePage({ initialStep = 0, onBack, onNavigateToBudget, 
           }`}>
             AXION
           </span>
-        </div>
+        </button>
 
         {/* Center Side: Index-Style Navigation Links */}
-        <nav className="hidden md:flex items-center space-x-8">
-          {sectionLabels.map((label, idx) => {
+        <nav className="pointer-events-auto hidden md:flex items-center space-x-8">
+        {sectionLabels.map((label, idx) => {
+          const className = `text-[8px] font-mono tracking-widest uppercase transition-all duration-300 relative cursor-pointer py-1 focus:outline-none ${
+            step === idx
+              ? isVisualDark
+                ? 'text-white font-extrabold'
+                : 'text-slate-900 font-extrabold'
+              : isVisualDark
+                ? 'text-slate-500 hover:text-slate-300'
+                : 'text-slate-400 hover:text-slate-700'
+          }`;
+
+          const content = (
+            <>
+              <span>{label}</span>
+
+              {step === idx && (
+                <motion.div
+                  layoutId="headerUnderline"
+                  className={`absolute bottom-0 left-0 right-0 h-[1.5px] ${
+                    isVisualDark
+                      ? 'bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.5)]'
+                      : 'bg-slate-900'
+                  }`}
+                />
+              )}
+            </>
+          );
+
+          if (idx === 1) {
             return (
-              <button
+              <a
                 key={idx}
-                onClick={() => {
+                href="/servicos"
+                onClick={(event) => {
+                  event.preventDefault();
+
                   if (!isAnimatingRef.current) {
                     lockAnimation();
-                    setIsFooterVisible(false);
-                    setStep(idx);
+                    navigateDirectlyToStep(1);
                   }
                 }}
-                className={`text-[8px] font-mono tracking-widest uppercase transition-all duration-300 relative cursor-pointer py-1 focus:outline-none ${
-                  step === idx
-                    ? isVisualDark ? 'text-white font-extrabold' : 'text-slate-900 font-extrabold'
-                    : isVisualDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-700'
-                }`}
+                className={className}
               >
-                <span>{label}</span>
-                {step === idx && (
-                  <motion.div 
-                    layoutId="headerUnderline" 
-                    className={`absolute bottom-0 left-0 right-0 h-[1.5px] ${
-                      isVisualDark ? 'bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.5)]' : 'bg-slate-900'
-                    }`} 
-                  />
-                )}
-              </button>
+                {content}
+              </a>
             );
-          })}
-        </nav>
+          }
+
+          return (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => {
+                if (!isAnimatingRef.current) {
+                  lockAnimation();
+                  navigateDirectlyToStep(idx);
+                }
+              }}
+              className={className}
+            >
+              {content}
+            </button>
+          );
+        })}
+      </nav>
 
         {/* Right Side: Back to Portal CTA Button */}
         <button
           onClick={onBack}
-          className={`flex items-center space-x-2 px-4.5 py-2 rounded-full text-[8px] font-bold tracking-widest uppercase transition-all duration-300 border cursor-pointer select-none focus:outline-none ${
+          className={`pointer-events-auto flex items-center space-x-2 px-4.5 py-2 rounded-full text-[8px] font-bold tracking-widest uppercase transition-all duration-300 border cursor-pointer select-none focus:outline-none ${
             isVisualDark 
               ? 'border-white/10 hover:border-white hover:bg-white/5 text-white' 
               : 'border-slate-900/10 hover:border-slate-900 hover:bg-slate-900/5 text-slate-800'
@@ -485,6 +1478,36 @@ export default function HomePage({ initialStep = 0, onBack, onNavigateToBudget, 
 
       {/* SINGLE SECTION CONTAINER WITH ENHANCED TRANSITIONS */}
       <div className="relative z-10 w-full h-full flex flex-col justify-center items-center px-6 md:px-12">
+        {isActive && (
+          step === 0 ||
+          step === 1 ||
+          step === 2
+        ) && (
+          <div
+            className={`pointer-events-none absolute inset-0 ${
+              step === 0
+                ? 'z-[30]'
+                : 'z-[5]'
+            }`}
+          >
+            <AxionParticleField
+              sourceElementRef={
+                heroLogoRef
+              }
+              morphProgress={
+                particleMorphProgress
+              }
+              servicesPortfolioProgress={
+                servicesPortfolioProgress
+              }
+              opacity={
+                step === 0
+                  ? particleCanvasTakeover
+                  : 1
+              }
+            />
+          </div>
+        )}
         <AnimatePresence mode="wait">
           
           {/* STEP 0: IMMERSIVE AXION BRAND FIELD */}
@@ -497,19 +1520,24 @@ export default function HomePage({ initialStep = 0, onBack, onNavigateToBudget, 
               transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
               className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-auto"
             >
-              <motion.img
-                src={heroBackground}
-                alt=""
-                className="absolute inset-0 h-full w-full object-cover object-center pointer-events-none"
-                initial={{ opacity: 0, scale: 1.075 }}
-                animate={{
-                  opacity: 1,
-                  scale: 1.035,
-                  x: mouseOffset.x * 0.32,
-                  y: mouseOffset.y * 0.32,
-                }}
-                transition={{ duration: 1.15, ease: [0.16, 1, 0.3, 1] }}
-              />
+              {isActive && (
+                <motion.img
+                  src={heroBackground}
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-cover object-center pointer-events-none"
+                  initial={{ opacity: 0, scale: 1.075 }}
+                  animate={{
+                    opacity: 1,
+                    scale: 1.035,
+                    x: mouseOffset.x * 0.32,
+                    y: mouseOffset.y * 0.32,
+                  }}
+                  transition={{
+                    duration: 1.15,
+                    ease: [0.16, 1, 0.3, 1],
+                  }}
+                />
+              )}
               <motion.div
                 className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/15 to-black/70 pointer-events-none"
                 initial={{ opacity: 0 }}
@@ -526,8 +1554,20 @@ export default function HomePage({ initialStep = 0, onBack, onNavigateToBudget, 
                 animate={{ opacity: 0.85 }}
                 transition={{ duration: 0.8, delay: 0.15 }}
               >
-                <FloatingTriangles theme="dark" variant="hero" />
+                {isActive && (
+                  <FloatingTriangles
+                    theme="dark"
+                    variant="hero"
+                  />
+                )}
               </motion.div>
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 z-[2] bg-black"
+                style={{
+                  opacity: heroDarkenProgress * 0.94,
+                }}
+              />
 
               <motion.div
                 className="absolute inset-0 opacity-35 pointer-events-none"
@@ -576,6 +1616,10 @@ export default function HomePage({ initialStep = 0, onBack, onNavigateToBudget, 
                 >
                   <motion.div
                     className="relative"
+                    style={{
+                      opacity: 1 - particleCanvasTakeover,
+                    }}
+                    ref={heroLogoRef}
                     animate={{
                       x: mouseOffset.x * 0.55,
                       y: mouseOffset.y * 0.55,
@@ -593,9 +1637,9 @@ export default function HomePage({ initialStep = 0, onBack, onNavigateToBudget, 
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.55, delay: 0.65, ease: 'easeOut' }}
                 >
-                  <p className="max-w-2xl text-[9px] sm:text-[10px] tracking-[0.3em] font-extrabold uppercase text-slate-200 leading-relaxed drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)]">
+                  <h1 className="max-w-2xl text-[9px] sm:text-[10px] tracking-[0.3em] font-extrabold uppercase text-slate-200 leading-relaxed drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)]">
                     Design Estratégico • Performance Digital • Experiências Memoráveis
-                  </p>
+                  </h1>
                 </motion.div>
               </div>
 
@@ -617,302 +1661,173 @@ export default function HomePage({ initialStep = 0, onBack, onNavigateToBudget, 
             </motion.div>
           )}
 
-          {/* STEP 1: CAPACIDADES — CONNECTED AXION ECOSYSTEM */}
-          {step === 1 && (
+          {/* SHARED SERVICES <-> PORTFOLIO STAGE */}
+          {(step === 1 || step === 2) && (
             <motion.div
-              key="capabilities-stage"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -30 }}
-              transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute inset-x-0 max-w-6xl mx-auto flex flex-col justify-center items-center text-center pointer-events-none w-full px-2 sm:px-4"
-            >
-              <div className="pointer-events-auto w-full space-y-5 md:space-y-7">
-                <div className="text-center space-y-2.5">
-                  <span className="text-[9px] font-mono tracking-[0.3em] opacity-40 uppercase">SERVIÇOS</span>
-                  <h3 className="mx-auto max-w-3xl text-2xl font-extrabold tracking-[-0.035em] uppercase text-slate-900 sm:text-3xl md:text-4xl">
-                    ECOSSISTEMAS DIGITAIS PARA EMPRESAS
-                  </h3>
-
-                  <div className="mx-auto flex max-w-xl items-center justify-center gap-2 pt-1 text-[8px] font-bold uppercase tracking-[0.18em] text-slate-500 sm:gap-4 sm:text-[9px] sm:tracking-[0.24em]">
-                    <span className="h-px flex-1 bg-gradient-to-r from-transparent to-slate-900/15" />
-                    <span>Marketing</span>
-                    <span className="font-mono text-sky-600">+</span>
-                    <span>Tecnologia</span>
-                    <span className="font-mono text-sky-600">+</span>
-                    <span>Inteligência Artificial</span>
-                    <span className="h-px flex-1 bg-gradient-to-l from-transparent to-slate-900/15" />
-                  </div>
-
-                </div>
-
-                <div className="mx-auto grid w-full max-w-6xl grid-cols-2 gap-px overflow-hidden rounded-[24px] border border-slate-900/10 bg-slate-900/10 shadow-[0_24px_70px_rgba(15,23,42,0.08)] lg:grid-cols-3">
-                  {capabilitiesData.map((cap, i) => {
-                    const Icon = cap.icon;
-
-                    return (
-                      <motion.button
-                        key={cap.id}
-                        type="button"
-                        onClick={() => setActivePopupIdx(i)}
-                        aria-label={`Explorar ${cap.title}`}
-                        initial={{ opacity: 0, y: 16 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.45, delay: 0.08 + i * 0.045, ease: [0.16, 1, 0.3, 1] }}
-                        whileHover={{ scale: 0.99 }}
-                        className="group relative flex min-h-[128px] cursor-pointer flex-col justify-between overflow-hidden bg-white/75 p-4 text-left transition-colors duration-300 hover:bg-white focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-sky-500 sm:min-h-[156px] sm:p-5 md:min-h-[170px] md:p-6"
-                      >
-                        <div className="absolute inset-x-0 top-0 h-px origin-left scale-x-0 bg-sky-500 transition-transform duration-500 group-hover:scale-x-100" />
-                        <div className="absolute -right-12 -top-12 h-28 w-28 rounded-full bg-sky-300/0 blur-3xl transition-colors duration-500 group-hover:bg-sky-300/20" />
-
-                        <div className="relative z-10 flex items-start justify-between gap-3">
-                          <span className="font-mono text-[9px] tracking-[0.2em] text-slate-400">{cap.id}</span>
-                          <div className="text-slate-700 transition-transform duration-500 group-hover:-translate-y-0.5 group-hover:translate-x-0.5">
-                            <Icon size={20} className="text-slate-800" />
-                          </div>
-                        </div>
-
-                        <div className="relative z-10 mt-4">
-                          <h4 className="max-w-[13rem] text-[10px] font-extrabold uppercase leading-tight tracking-[0.1em] text-slate-900 sm:text-xs">
-                            {cap.title}
-                          </h4>
-                          <p className="mt-2 hidden max-w-[18rem] text-[9px] leading-relaxed text-slate-500 sm:block md:text-[10px]">
-                            {cap.desc}
-                          </p>
-                        </div>
-
-                        <div className="relative z-10 mt-3 flex items-center justify-between text-[8px] font-bold uppercase tracking-[0.16em] text-slate-400 transition-colors group-hover:text-sky-700">
-                          <span>{cap.services.length} serviços</span>
-                          <ArrowRight size={11} className="transition-transform duration-300 group-hover:translate-x-1" />
-                        </div>
-                      </motion.button>
-                    );
-                  })}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={onNavigateToServices}
-                  className="group mx-auto flex cursor-pointer items-center gap-2 border-b border-slate-900/15 pb-1 text-[8px] font-extrabold uppercase tracking-[0.22em] text-slate-700 transition-colors duration-300 hover:border-sky-500 hover:text-sky-700 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-500"
-                >
-                  <span>Explorar serviços</span>
-                  <ArrowRight size={10} className="transition-transform duration-300 group-hover:translate-x-1" />
-                </button>
-              </div>
-            </motion.div>
-          )}
-
-          {/* STEP 2: IMMERSIVE NATIVE FULLSCREEN SIDE-BY-SIDE VIDEO SLIDER (TOUCHPAD GESTURES CAPABLE) */}
-          {(step === 2 || step === 3) && (
-            <motion.div
-              key="portfolio-stage"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -30 }}
-              transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute inset-0 flex flex-col justify-center items-center text-center pointer-events-none w-full max-w-5xl mx-auto px-6"
-            >
-              <div className="pointer-events-auto space-y-6 w-full relative flex flex-col items-center">
-                
-                {/* Minimal Elegant Header */}
-                <div className="text-center space-y-2">
-                  <span className="text-[9px] font-mono tracking-[0.3em] opacity-40 uppercase text-slate-400">SHOWCASE DE PERFORMANCE</span>
-                  <h3 className="text-2xl md:text-3xl font-extrabold tracking-tight uppercase text-white leading-none">
-                    NOSSO TRABALHO EM AÇÃO
-                  </h3>
-                  <p className="text-[10px] tracking-widest uppercase text-slate-400 max-w-lg mx-auto">
-                    Deslize para o lado no touchpad ou use as setas para explorar o portfólio de websites.
-                  </p>
-                </div>
-
-                {/* CINEMATIC PANORAMIC SLIDER STAGE */}
-                <div className="relative w-full h-[400px] md:h-[450px] flex items-center justify-center overflow-visible mt-4">
-                  {portfolioProjects.map((project, idx) => {
-                    // Check positional difference from active project
-                    const diff = idx - activeProjectIdx;
-                    const isActive = idx === activeProjectIdx;
-                    
-                    // We calculate positional transitions beautifully with physics springs
-                    let xTranslation = "0%";
-                    let zIndex = 10;
-                    let scale = 0.85;
-                    let opacity = 0.3;
-
-                    if (isActive) {
-                      xTranslation = "0%";
-                      zIndex = 30;
-                      scale = 1.0;
-                      opacity = 1.0;
-                    } else if (diff === 1 || (activeProjectIdx === 2 && idx === 0)) {
-                      // Next slide peeking on right side
-                      xTranslation = "80%";
-                      zIndex = 20;
-                      scale = 0.84;
-                      opacity = 0.35;
-                    } else {
-                      // Previous slide peeking on left side
-                      xTranslation = "-80%";
-                      zIndex = 20;
-                      scale = 0.84;
-                      opacity = 0.35;
-                    }
-
-                    return (
-                      <motion.div
-                        key={project.id}
-                        animate={{ 
-                          x: xTranslation, 
-                          scale: scale, 
-                          opacity: opacity,
-                          z: isActive ? 0 : -50
-                        }}
-                        onClick={() => {
-                          if (!isActive) {
-                            setActiveProjectIdx(idx);
-                          }
-                        }}
-                        transition={{ type: 'spring', stiffness: 220, damping: 25 }}
-                        className={`absolute w-full max-w-2xl h-full rounded-3xl border border-white/10 bg-slate-950 overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.85)] flex flex-col justify-between p-6 md:p-8 cursor-pointer select-none`}
-                        style={{ zIndex }}
-                      >
-                        {/* Project background media */}
-                        {project.backgroundType === 'video' ? (
-                          <video
-                            src={project.backgroundUrl}
-                            autoPlay
-                            loop
-                            muted
-                            playsInline
-                            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
-                              isActive ? 'opacity-65' : 'opacity-20'
-                            }`}
-                          />
-                        ) : (
-                          <img
-                            src={project.backgroundUrl}
-                            alt=""
-                            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
-                              isActive ? 'opacity-65' : 'opacity-20'
-                            }`}
-                          />
-                        )}
-
-                        {/* Top Gradient for layout overlay clarity */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-slate-950/40 z-10 pointer-events-none" />
-
-                        {/* Slide Top: Index & Floating Glass Logo */}
-                        <div className="flex justify-between items-start w-full relative z-20">
-                          <span className="text-[10px] font-mono tracking-widest text-white/40">PORTFÓLIO</span>
-                          
-                          {/* Beautiful glassmorphic circular plate showing the logo */}
-                          <div className={`p-3 rounded-2xl border bg-slate-950/50 backdrop-blur-md transition-colors duration-300 ${
-                            isActive ? 'border-sky-400/40' : 'border-white/10'
-                          }`}>
-                            <img 
-                              src={project.logo} 
-                              alt={project.title} 
-                              className={`h-7 w-auto object-contain transition-all duration-300 filter ${
-                                isActive ? 'brightness-100 drop-shadow-[0_0_10px_rgba(56,189,248,0.5)]' : 'opacity-60'
-                              }`}
-                              referrerPolicy="no-referrer"
-                            />
-                          </div>
-                        </div>
-
-                        {/* Slide Bottom: Beautifully Clean & Minimalist Title + Single Key Metric Line */}
-                        <div className="space-y-1.5 relative z-20 text-left pt-12">
-                          <h4 className="text-2xl md:text-3xl font-black text-white tracking-[0.2em] uppercase leading-none">
-                            {project.title}
-                          </h4>
-                          
-                          <div className={`flex items-center space-x-2 text-[8px] font-mono tracking-widest text-sky-400 font-bold uppercase transition-all duration-500 ${
-                            isActive ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1'
-                          }`}>
-                            <span>{project.kpi}</span>
-                            <span className="opacity-45">//</span>
-                            <span className="text-white/60">{project.result}</span>
-                          </div>
-                        </div>
-
-                      </motion.div>
-                    );
-                  })}
-                </div>
-
-                {/* Minimal Navigation Controls & Dots */}
-                <div className="flex items-center space-x-6 pt-4 relative z-20 pointer-events-auto">
-                  <button 
-                    onClick={prevProject}
-                    className="p-2.5 rounded-full border border-white/10 hover:border-white/30 bg-white/5 text-white/70 hover:text-white hover:scale-105 transition-all cursor-pointer focus:outline-none"
-                  >
-                    <ChevronLeft size={16} />
-                  </button>
-
-                  <div className="flex items-center space-x-2.5">
-                    {portfolioProjects.map((_, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => setActiveProjectIdx(idx)}
-                        className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-                          activeProjectIdx === idx 
-                            ? 'w-6 bg-white shadow-[0_0_10px_rgba(56,189,248,0.5)]' 
-                            : 'w-1.5 bg-white/20 hover:bg-white/40'
-                        }`}
-                      />
-                    ))}
-                  </div>
-
-                  <button 
-                    onClick={nextProject}
-                    className="p-2.5 rounded-full border border-white/10 hover:border-white/30 bg-white/5 text-white/70 hover:text-white hover:scale-105 transition-all cursor-pointer focus:outline-none"
-                  >
-                    <ChevronRight size={16} />
-                  </button>
-                </div>
-
-              </div>
-            </motion.div>
-          )}
-
-          {/* STEP 4: THE ROYAL BLUE BUDGET CTA SECTION */}
-          {step === 4 && (
-            <motion.div
-              key="budget-home-cta-stage"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{
-                opacity: isFooterVisible ? 0.28 : 1,
-                y: isFooterVisible ? -90 : 0,
-                scale: isFooterVisible ? 0.96 : 1,
+              key="services-portfolio-shared-stage"
+              initial={{ opacity: 1 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{
+                duration: 0.45,
+                ease: [0.16, 1, 0.3, 1],
               }}
-              exit={{ opacity: 0, y: -30 }}
-              transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute inset-0 flex flex-col justify-center items-center text-center pointer-events-auto w-full max-w-4xl mx-auto px-6 select-none"
+              className="absolute inset-0 z-10"
             >
-              <div className="flex flex-col items-center justify-center space-y-6 max-w-2xl">
-                {/* Heading */}
-                <h3 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight uppercase text-white leading-tight">
-                  PRONTO PARA ELEVAR O SEU PATAMAR DIGITAL?
-                </h3>
+              {/*
+              * SERVICES
+              *
+              * Keep it mounted slightly beyond the end of its
+              * fade so React never removes visible content.
+              */}
+              {servicesPortfolioProgress <= 0.21 && (
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    opacity:
+                      servicesContentOpacity,
 
-                {/* Description - Much shorter and punchier */}
-                <p className="text-xs sm:text-sm text-slate-300 max-w-lg leading-relaxed font-medium">
-                  Estime o investimento ideal para impulsionar a performance digital da sua empresa.
-                </p>
+                    transform:
+                      `scale(${servicesContentScale})`,
 
-                {/* Big Glowing White CTA Button */}
-                <div className="pt-4">
-                  <motion.button
-                    whileHover={{ scale: 1.05, boxShadow: "0 0 25px rgba(255, 255, 255, 0.25)" }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={onNavigateToBudget}
-                    className="flex items-center space-x-3 px-8 py-4 rounded-full bg-white hover:bg-slate-100 text-slate-950 text-[10px] font-black uppercase tracking-[0.25em] transition-all duration-300 cursor-pointer shadow-lg font-bold"
-                  >
-                    <span>Pedir Orçamento</span>
-                    <ArrowRight size={12} className="text-slate-950" />
-                  </motion.button>
+                    transformOrigin:
+                      '50% 50%',
+                  }}
+                >
+                  <ServicesExperience
+                    onNavigateToService={
+                      onNavigateToService
+                    }
+                  />
                 </div>
-              </div>
+              )}
+
+              {/*
+              * PORTFOLIO
+              *
+              * Mount it BEFORE it becomes visible.
+              * It therefore never suddenly appears.
+              */}
+              {servicesPortfolioProgress >= 0.79 && (
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    opacity:
+                      portfolioContentOpacity,
+
+                    transform:
+                      `translateY(${portfolioContentY}px) scale(${portfolioContentScale})`,
+
+                    transformOrigin:
+                      '50% 50%',
+                  }}
+                >
+                  <div className="absolute inset-0 [&_h3]:hidden">
+                    <PortfolioExperience
+                      projects={
+                        portfolioProjects
+                      }
+                      activeIndex={
+                        activeProjectIdx
+                      }
+                      onSelect={
+                        setActiveProjectIdx
+                      }
+                      onNext={
+                        nextProject
+                      }
+                      onPrev={
+                        prevProject
+                      }
+                    />
+                  </div>
+                </div>
+              )}
             </motion.div>
+          )}
+
+          {/* STEP 4: MINIMAL BUDGET CTA */}
+          {step === 4 && (
+            <motion.section
+              key="budget-home-cta-stage"
+              initial={{ opacity: 0, y: 24 }}
+              animate={{
+                opacity: isFooterVisible ? 0.24 : 1,
+                y: isFooterVisible ? -72 : 0,
+                scale: isFooterVisible ? 0.975 : 1,
+              }}
+              exit={{ opacity: 0, y: -24 }}
+              transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+              className="absolute inset-0 z-10 flex items-center justify-center px-6 pointer-events-auto select-none md:px-12"
+            >
+              <div className="relative flex w-full max-w-5xl flex-col items-center text-center">
+                <motion.span
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
+                  className="font-mono text-[8px] font-bold uppercase tracking-[0.34em] text-sky-400"
+                >
+                  AXION / Próximo passo
+                </motion.span>
+
+                <motion.h2
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.7, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
+                  className="mt-7 max-w-4xl text-[clamp(3rem,6.1vw,6.4rem)] font-black uppercase leading-[0.86] tracking-[-0.055em] text-white"
+                >
+                  A próxima fase
+                  <br />
+                  <span className="text-sky-400">começa aqui.</span>
+                </motion.h2>
+
+                <motion.p
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.55, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                  className="mt-7 max-w-2xl text-sm font-medium leading-[1.8] text-slate-300 md:text-[15px]"
+                >
+                  Conte-nos o que pretende construir, melhorar ou automatizar.
+                  Ajudamos a transformar essa necessidade numa solução clara, segura e preparada para crescer.
+                </motion.p>
+
+                <motion.button
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                  whileHover={{ x: 4 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={onNavigateToBudget}
+                  className="group mt-10 inline-flex cursor-pointer items-center gap-4 border-b border-white/25 pb-3 text-[10px] font-black uppercase tracking-[0.22em] text-white transition-colors duration-300 hover:border-sky-400 hover:text-sky-300 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-400"
+                >
+                  <span>Pedir orçamento</span>
+                  <ArrowRight
+                    size={13}
+                    className="transition-transform duration-300 group-hover:translate-x-1.5"
+                  />
+                </motion.button>
+
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.6, delay: 0.38 }}
+                  className="mt-14 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 font-mono text-[7px] font-bold uppercase tracking-[0.18em] text-white/28 sm:gap-x-6"
+                >
+                  <span>Websites</span>
+                  <span className="h-1 w-1 rounded-full bg-sky-400/50" />
+                  <span>Sistemas</span>
+                  <span className="h-1 w-1 rounded-full bg-sky-400/50" />
+                  <span>Automação</span>
+                  <span className="h-1 w-1 rounded-full bg-sky-400/50" />
+                  <span>AI</span>
+                </motion.div>
+
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[28rem] w-[28rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-400/[0.035] blur-[130px]"
+                />
+              </div>
+            </motion.section>
           )}
 
         </AnimatePresence>
@@ -933,8 +1848,7 @@ export default function HomePage({ initialStep = 0, onBack, onNavigateToBudget, 
                 onNavigateSection={(idx) => {
                   if (!isAnimatingRef.current) {
                     lockAnimation();
-                    setIsFooterVisible(false);
-                    setStep(idx);
+                    navigateDirectlyToStep(idx);
                   }
                 }}
               />
@@ -943,297 +1857,482 @@ export default function HomePage({ initialStep = 0, onBack, onNavigateToBudget, 
 
         </AnimatePresence>
 
-        {/* STEP 3: EDITORIAL BUSINESS EVOLUTION PRESENCE */}
+        {/* STEP 3: BUSINESS DIGITAL EVOLUTION */}
         <AnimatePresence>
           {step === 3 && (
-            <motion.div
-              key="brand-optimization-stage"
-              initial={{ y: "100%" }}
-              animate={{ y: "0%" }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 28, stiffness: 120 }}
-              className="fixed inset-0 z-40 bg-white/[0.98] backdrop-blur-xl flex flex-col justify-center items-center overflow-y-auto w-full px-6 py-10 md:px-12 pointer-events-auto"
+            <motion.section
+              key="business-evolution-stage"
+              initial={{ y: '100%' }}
+              animate={{ y: '0%' }}
+              exit={{ y: '100%' }}
+              transition={{
+                type: 'spring',
+                damping: 30,
+                stiffness: 115,
+              }}
+              className="fixed inset-0 z-40 overflow-hidden bg-[#f7f7f4] text-slate-950"
             >
-              {/* Soft watermark background logo */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.025] select-none z-0 overflow-hidden">
-                <Logo theme="light" glow={false} className="scale-[4] md:scale-[6]" />
+              {/* Subtle AXION watermark */}
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden opacity-[0.014]">
+                <Logo
+                  theme="light"
+                  glow={false}
+                  className="scale-[4.6]"
+                />
               </div>
 
-              {/* Floating Collapse Trigger */}
-              <button 
-                onClick={() => setStep(2)}
-                className="absolute top-24 right-8 md:right-12 p-2 text-slate-400 hover:text-sky-600 transition-colors cursor-pointer focus:outline-none z-50 flex items-center justify-center"
-                title="Voltar ao Portfólio"
-              >
-                <ChevronDown size={16} className="text-slate-800" />
-              </button>
-
-              <div className="space-y-6 w-full max-w-6xl my-auto pt-16 md:pt-12 relative z-10">
-                
-                {/* Section Header */}
-                <div className="grid gap-5 md:grid-cols-12 md:items-end">
-                  <div className="md:col-span-7 space-y-3 text-left">
-                    <span className="text-[9px] font-mono tracking-[0.32em] uppercase text-sky-600">EVOLUÇÃO & PROSPERIDADE</span>
-                    <h3 className="text-3xl md:text-5xl font-black tracking-[-0.04em] uppercase text-slate-950 leading-[0.92]">
-                      A ERA DA EVOLUÇÃO TECNOLÓGICA
-                    </h3>
-                  </div>
-                  <p className="md:col-span-5 text-[10px] tracking-[0.12em] uppercase text-slate-500 max-w-lg leading-relaxed md:pb-1 text-left">
-                    Clique nas fases abaixo para compreender como a tecnologia dita o ritmo de sobrevivência e prosperidade de qualquer negócio contemporâneo.
-                  </p>
-                </div>
-
-                {/* Interactive Stepper Navigation */}
-                <div className="w-full border-y border-slate-900/10">
-                  <div className="grid grid-cols-3 w-full">
-                    <button
-                      onClick={() => setActiveDiagTab('inertia')}
-                      className={`relative flex items-center justify-center space-x-2 px-3 py-4 text-[9px] font-extrabold uppercase tracking-[0.2em] transition-colors cursor-pointer focus:outline-none ${
-                        activeDiagTab === 'inertia'
-                          ? 'text-sky-600'
-                          : 'text-slate-400 hover:text-slate-800'
-                      }`}
-                    >
-                      <span className="opacity-55 font-mono">01.</span>
-                      <span>INÉRCIA</span>
-                      {activeDiagTab === 'inertia' && <motion.span layoutId="presence-phase-line" className="absolute -bottom-px inset-x-0 h-px bg-sky-500" />}
-                    </button>
-                    <button
-                      onClick={() => setActiveDiagTab('transition')}
-                      className={`relative flex items-center justify-center space-x-2 px-3 py-4 text-[9px] font-extrabold uppercase tracking-[0.2em] transition-colors cursor-pointer focus:outline-none ${
-                        activeDiagTab === 'transition'
-                          ? 'text-sky-600'
-                          : 'text-slate-400 hover:text-slate-800'
-                      }`}
-                    >
-                      <span className="opacity-55 font-mono">02.</span>
-                      <span>TRANSIÇÃO</span>
-                      {activeDiagTab === 'transition' && <motion.span layoutId="presence-phase-line" className="absolute -bottom-px inset-x-0 h-px bg-sky-500" />}
-                    </button>
-                    <button
-                      onClick={() => setActiveDiagTab('ascension')}
-                      className={`relative flex items-center justify-center space-x-2 px-3 py-4 text-[9px] font-extrabold uppercase tracking-[0.2em] transition-colors cursor-pointer focus:outline-none ${
-                        activeDiagTab === 'ascension'
-                          ? 'text-sky-600'
-                          : 'text-slate-400 hover:text-slate-800'
-                      }`}
-                    >
-                      <span className="opacity-55 font-mono">03.</span>
-                      <span>ASCENSÃO</span>
-                      {activeDiagTab === 'ascension' && <motion.span layoutId="presence-phase-line" className="absolute -bottom-px inset-x-0 h-px bg-sky-500" />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Open editorial composition */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 items-stretch w-full text-left border-b border-slate-900/10">
-                  
-                  {/* Left Column: Poetic Business Narrative */}
-                  <motion.div
-                    key={`narrative-${activeDiagTab}`}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                    className="lg:col-span-7 flex flex-col justify-between py-8 lg:pr-12 space-y-8"
-                  >
-                    <div className="space-y-5">
-                      <div className="flex items-center space-x-2">
-                        <span className="h-px w-8 bg-sky-500" />
-                        <span className="text-[8px] font-mono font-bold tracking-[0.2em] uppercase text-sky-600">
-                          {activePresencePhase.status}
-                        </span>
-                        <span className="text-[8px] font-mono text-slate-400 uppercase tracking-widest hidden sm:inline">/ DIRETRIZ DE CRESCIMENTO</span>
-                      </div>
-
-                      <h4 className="max-w-2xl text-2xl md:text-4xl font-black text-slate-950 tracking-[-0.035em] leading-[1.02]">
-                        {activePresencePhase.title}
-                      </h4>
-
-                      <p className="max-w-2xl text-xs md:text-sm text-slate-600 leading-[1.8] font-medium">
-                        {activePresencePhase.narrative}
-                      </p>
-                    </div>
-
-                    {/* Metrics as editorial typography */}
-                    <div className="grid grid-cols-2 pt-5 border-t border-slate-900/10">
-                      <div className="pr-5">
-                        <span className="block text-[8px] font-mono tracking-[0.18em] text-slate-400 uppercase mb-2">MÉTRICA IMPACTADA</span>
-                        <span className="block text-[10px] font-bold tracking-[0.18em] text-slate-500 uppercase">{activePresencePhase.metricLabel}</span>
-                        <span className="block text-3xl md:text-5xl font-black tracking-[-0.05em] text-sky-600 leading-none mt-1">
-                          {activePresencePhase.metricValue}
-                        </span>
-                      </div>
-                      <div className="pl-5 border-l border-slate-900/10 flex flex-col justify-end">
-                        <span className="block text-[8px] font-mono tracking-[0.18em] text-slate-400 uppercase mb-2">POSIÇÃO COMPETITIVA</span>
-                        <span className="block max-w-[13rem] text-[10px] md:text-xs leading-relaxed font-extrabold tracking-[0.08em] text-slate-800 uppercase">
-                          {activePresencePhase.competitivePosition}
-                        </span>
-                      </div>
-                    </div>
-                  </motion.div>
-
-                  {/* Right Column: Dynamic Graphical Chart Representing Prosperity Curve */}
-                  <motion.div
-                    key={`chart-${activeDiagTab}`}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.45 }}
-                    className="lg:col-span-5 flex flex-col justify-between py-8 lg:pl-12 lg:border-l border-slate-900/10 text-slate-950 relative"
-                  >
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-[8px] font-mono text-slate-400 uppercase tracking-[0.18em]">CURVA DE EVOLUÇÃO DO NEGÓCIO</span>
-                        <span className="text-[8px] font-mono font-bold uppercase tracking-[0.16em] text-sky-600">
-                          {activePresencePhase.chartState}
-                        </span>
-                      </div>
-
-                      {/* Interactive Custom SVG Graph */}
-                      <div className="relative h-52 md:h-60 w-full overflow-hidden">
-                        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 300 120" fill="none" preserveAspectRatio="none">
-                          <defs>
-                            <linearGradient id="presence-line" x1="0" y1="0" x2="1" y2="0">
-                              <stop offset="0%" stopColor="#94a3b8" stopOpacity="0.28" />
-                              <stop offset="100%" stopColor="#0ea5e9" />
-                            </linearGradient>
-                          </defs>
-                          <path d="M10 108 H290" stroke="#0f172a" strokeOpacity="0.1" strokeWidth="0.6" vectorEffect="non-scaling-stroke" />
-                          <path d="M10 104 V112 M290 104 V112" stroke="#0f172a" strokeOpacity="0.14" strokeWidth="0.6" vectorEffect="non-scaling-stroke" />
-                          <motion.path
-                            key={`halo-${activeDiagTab}`}
-                            d={activePresencePhase.chartPath}
-                            stroke="#0ea5e9"
-                            strokeWidth="6"
-                            strokeOpacity="0.08"
-                            vectorEffect="non-scaling-stroke"
-                            initial={{ pathLength: 0, opacity: 0 }}
-                            animate={{ pathLength: 1, opacity: 1 }}
-                            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                          />
-                          <motion.path
-                            key={activeDiagTab}
-                            d={activePresencePhase.chartPath}
-                            stroke="url(#presence-line)"
-                            strokeWidth="1.5"
-                            vectorEffect="non-scaling-stroke"
-                            initial={{ pathLength: 0, opacity: 0 }}
-                            animate={{ pathLength: 1, opacity: 1 }}
-                            transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
-                          />
-                          <motion.path
-                            key={`guide-${activeDiagTab}`}
-                            d={`M${activePresencePhase.chartEnd.x} ${activePresencePhase.chartEnd.y + 5} V108`}
-                            stroke="#0ea5e9"
-                            strokeOpacity="0.18"
-                            strokeWidth="0.7"
-                            strokeDasharray="2 4"
-                            vectorEffect="non-scaling-stroke"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.55, duration: 0.35 }}
-                          />
-                          <motion.circle
-                            key={`point-${activeDiagTab}`}
-                            cx={activePresencePhase.chartEnd.x}
-                            cy={activePresencePhase.chartEnd.y}
-                            r="4"
-                            fill="#ffffff"
-                            stroke="#0ea5e9"
-                            strokeWidth="1.5"
-                            vectorEffect="non-scaling-stroke"
-                            initial={{ opacity: 0, scale: 0 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: 0.55, duration: 0.3 }}
-                          />
-                          <motion.circle
-                            key={`point-core-${activeDiagTab}`}
-                            cx={activePresencePhase.chartEnd.x}
-                            cy={activePresencePhase.chartEnd.y}
-                            r="1.5"
-                            fill="#0ea5e9"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.7, duration: 0.25 }}
-                          />
-                        </svg>
-                        <div className="absolute bottom-0 left-0 text-[7px] font-mono text-slate-400 tracking-[0.2em] uppercase">INÍCIO</div>
-                        <div className="absolute bottom-0 right-0 text-[7px] font-mono text-slate-400 tracking-[0.2em] uppercase">FUTURO</div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3 pt-5 text-left">
-                      <span className="text-[8px] font-mono text-slate-400 uppercase tracking-[0.18em] block">CONSEQUÊNCIAS ESTRATÉGICAS</span>
-                      <p className="text-[10px] leading-[1.7] text-slate-600 font-medium uppercase tracking-[0.06em]">
-                        {activePresencePhase.consequence}
-                      </p>
-                    </div>
-                  </motion.div>
-
-                </div>
-
-                {/* CALL TO ACTION PARA O QUIZ DE ORÇAMENTO */}
-                <div className="flex justify-end relative z-20 pointer-events-auto">
-                  <button
-                    onClick={onNavigateToBudget}
-                    className="group flex items-center space-x-3 py-2 border-b border-slate-900/20 hover:border-sky-500 text-slate-900 hover:text-sky-600 text-[9px] font-black uppercase tracking-[0.25em] transition-colors duration-300 cursor-pointer"
-                  >
-                    <span>Estimar Meu Orçamento</span>
-                    <ArrowRight size={11} className="transition-transform duration-300 group-hover:translate-x-1" />
-                  </button>
-                </div>
-
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* HIGH-END INTERACTIVE SIDE TRACKER */}
-        <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col items-end space-y-6 pointer-events-auto z-30">
-          {sectionLabels.map((label, idx) => {
-            return (
+              {/* Return to portfolio */}
               <button
-                key={idx}
+                type="button"
                 onClick={() => {
                   if (!isAnimatingRef.current) {
                     lockAnimation();
-                    setIsFooterVisible(false);
-                    setStep(idx);
+                    navigateDirectlyToStep(2);
                   }
                 }}
-                className="group flex items-center space-x-3 cursor-pointer focus:outline-none text-right"
+                className="absolute right-8 top-[5.35rem] z-50 flex cursor-pointer items-center gap-2 text-[8px] font-black uppercase tracking-[0.2em] text-slate-400 transition-colors hover:text-sky-600 md:right-12"
               >
-                <span className={`text-[8px] font-mono font-extrabold tracking-widest uppercase transition-all duration-300 opacity-0 -translate-x-2 group-hover:opacity-60 group-hover:translate-x-0 pr-1 select-none ${
-                  isVisualDark 
-                    ? 'text-white' 
-                    : 'text-slate-800'
-                } ${
-                  step === idx ? 'opacity-80 translate-x-0' : ''
-                }`}>
-                  {label}
-                </span>
-                
-                <div className="relative flex items-center justify-center">
-                  {step === idx && (
-                    <motion.div 
-                      className={`absolute w-3.5 h-3.5 rounded-full border ${
-                        isVisualDark 
-                          ? 'bg-white/10 border-white/10' 
-                          : 'bg-slate-900/10 border-slate-900/10'
-                      }`}
-                      layoutId="activeGlow"
-                      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                    />
-                  )}
-                  <div className={`w-1.5 h-1.5 rounded-full transition-all duration-500 border ${
-                    step === idx
-                      ? isVisualDark ? 'bg-white border-white scale-125' : 'bg-slate-900 border-slate-900 scale-125' 
-                      : isVisualDark ? 'border-white/25 bg-transparent group-hover:border-white/50' : 'border-slate-900/25 bg-transparent group-hover:border-slate-900/50'
-                  }`} />
-                </div>
+                <ChevronDown size={14} />
+                <span>Portfólio</span>
               </button>
-            );
-          })}
-        </div>
+
+              <div className="relative z-10 mx-auto hidden h-dvh w-full max-w-[1380px] flex-col px-6 pb-4 pt-[5.35rem] md:px-12 lg:flex">
+                {/* Intro */}
+                <div className="grid shrink-0 gap-5 border-b border-slate-900/10 pb-4 lg:grid-cols-12 lg:items-end">
+                  <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.62,
+                      ease: transitionEase,
+                    }}
+                    className="lg:col-span-7"
+                  >
+                    <span className="font-mono text-[8px] font-bold uppercase tracking-[0.32em] text-sky-600">
+                      AXION / Evolução digital
+                    </span>
+
+                    <h2 className="mt-3 max-w-[49rem] text-[clamp(2.25rem,5.4vh,4.3rem)] font-black uppercase leading-[0.86] tracking-[-0.052em]">
+                      Evoluir com princípio.
+                      <br />
+                      <span className="text-sky-600">
+                        Crescer com segurança.
+                      </span>
+                    </h2>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.62,
+                      delay: 0.08,
+                      ease: transitionEase,
+                    }}
+                    className="lg:col-span-5 lg:pb-1"
+                  >
+                    <p className="max-w-xl text-[13px] font-semibold leading-[1.65] text-slate-700">
+                      A AXION ajuda empresas a evoluir tecnologicamente sem perder identidade,
+                      visão ou controlo.
+                    </p>
+
+                    <p className="mt-2 max-w-xl text-[11px] font-medium leading-[1.65] text-slate-500">
+                      Construímos websites, plataformas, sistemas internos, automações e
+                      integrações de AI alinhados com os processos reais do negócio e preparados
+                      para sustentar crescimento.
+                    </p>
+                  </motion.div>
+                </div>
+
+                {/* Evolution stage selector */}
+                <div className="grid shrink-0 grid-cols-3 border-b border-slate-900/10">
+                  {(
+                    [
+                      'base',
+                      'structure',
+                      'evolution',
+                    ] as EvolutionStageKey[]
+                  ).map((stageKey) => {
+                    const item = evolutionStages[stageKey];
+                    const isActive = activeEvolutionStage === stageKey;
+
+                    return (
+                      <button
+                        key={stageKey}
+                        type="button"
+                        onClick={() => setActiveEvolutionStage(stageKey)}
+                        className={`relative cursor-pointer px-2 py-3.5 text-left transition-colors md:px-5 ${
+                          isActive
+                            ? 'text-sky-600'
+                            : 'text-slate-400 hover:text-slate-800'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="font-mono text-[8px] font-bold tracking-[0.18em]">
+                            {item.id}
+                          </span>
+                          <span className="text-[9px] font-black uppercase tracking-[0.2em]">
+                            {item.label}
+                          </span>
+                        </div>
+
+                        {isActive && (
+                          <motion.div
+                            layoutId="evolution-stage-line"
+                            className="absolute inset-x-0 bottom-[-1px] h-[2px] bg-sky-500"
+                            transition={{
+                              type: 'spring',
+                              stiffness: 280,
+                              damping: 28,
+                            }}
+                          />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Main editorial area */}
+                <div className="grid min-h-0 flex-1 overflow-hidden lg:grid-cols-12">
+                  {/* Narrative */}
+                  <motion.div
+                    key={`evolution-copy-${activeEvolutionStage}`}
+                    initial={{ opacity: 0, x: -12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{
+                      duration: 0.46,
+                      ease: transitionEase,
+                    }}
+                    className="flex min-h-0 flex-col justify-start overflow-hidden border-b border-slate-900/10 py-[clamp(1rem,2.3vh,1.45rem)] lg:col-span-5 lg:border-b-0 lg:border-r lg:pr-10"
+                  >
+                    <span className="font-mono text-[7px] font-bold uppercase tracking-[0.26em] text-sky-600">
+                      {currentEvolutionStage.eyebrow}
+                    </span>
+
+                    <h3 className="mt-3 max-w-[34rem] text-[clamp(1.45rem,3.5vh,2.35rem)] font-black leading-[0.98] tracking-[-0.035em]">
+                      {currentEvolutionStage.title}
+                    </h3>
+
+                    <p className="mt-4 max-w-xl text-[12px] font-medium leading-[1.66] text-slate-600">
+                      {currentEvolutionStage.body}
+                    </p>
+
+                    <div className="mt-4 grid grid-cols-2 gap-x-6 border-t border-slate-900/10 pt-2">
+                      {currentEvolutionStage.points.map((point, index) => (
+                        <motion.div
+                          key={point}
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{
+                            duration: 0.3,
+                            delay: index * 0.035,
+                          }}
+                          className="flex min-h-8 items-start gap-2 border-b border-slate-900/8 py-2"
+                        >
+                          <span className="mt-[2px] font-mono text-[7px] text-sky-600">
+                            {String(index + 1).padStart(2, '0')}
+                          </span>
+
+                          <span className="text-[8px] font-bold uppercase leading-[1.4] tracking-[0.075em] text-slate-600">
+                            {point}
+                          </span>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </motion.div>
+
+                  {/* Animated system diagram */}
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{
+                      duration: 0.65,
+                      delay: 0.1,
+                    }}
+                    className="relative flex min-h-0 items-center justify-center overflow-hidden lg:col-span-7 lg:pl-6"
+                  >
+                    <div className="absolute left-6 top-4 z-10">
+                      <span className="font-mono text-[7px] font-bold uppercase tracking-[0.24em] text-slate-400">
+                        Arquitetura digital / visualização
+                      </span>
+                    </div>
+
+                    <div className="h-full min-h-0 w-full pt-5">
+                      <EvolutionSystemDiagram stage={activeEvolutionStage} />
+                    </div>
+                  </motion.div>
+                </div>
+
+                {/* Principles */}
+                <div className="grid shrink-0 border-t border-slate-900/10 sm:grid-cols-3">
+                  <div className="py-3 sm:pr-6">
+                    <span className="font-mono text-[7px] font-bold uppercase tracking-[0.22em] text-sky-600">
+                      01 / Identidade
+                    </span>
+                    <p className="mt-1.5 max-w-sm text-[9px] font-semibold leading-[1.45] text-slate-600">
+                      Evoluir sem descaracterizar o que torna o negócio reconhecível.
+                    </p>
+                  </div>
+
+                  <div className="border-t border-slate-900/10 py-3 sm:border-l sm:border-t-0 sm:px-6">
+                    <span className="font-mono text-[7px] font-bold uppercase tracking-[0.22em] text-sky-600">
+                      02 / Estrutura
+                    </span>
+                    <p className="mt-1.5 max-w-sm text-[9px] font-semibold leading-[1.45] text-slate-600">
+                      Construir primeiro uma base coerente para poder crescer com confiança.
+                    </p>
+                  </div>
+
+                  <div className="border-t border-slate-900/10 py-3 sm:border-l sm:border-t-0 sm:pl-6">
+                    <span className="font-mono text-[7px] font-bold uppercase tracking-[0.22em] text-sky-600">
+                      03 / Segurança
+                    </span>
+                    <p className="mt-1.5 max-w-sm text-[9px] font-semibold leading-[1.45] text-slate-600">
+                      Adicionar capacidade sem perder controlo, clareza ou responsabilidade.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              {/* MOBILE EVOLUTION EXPERIENCE */}
+              <div
+                className="relative z-10 h-dvh w-full overflow-y-auto overscroll-contain px-5 pb-28 pt-28 touch-pan-y lg:hidden"
+                onWheel={(event) => {
+                  event.stopPropagation();
+                }}
+                onTouchStart={(event) => {
+                  event.stopPropagation();
+                }}
+                onTouchMove={(event) => {
+                  event.stopPropagation();
+                }}
+                onTouchEnd={(event) => {
+                  event.stopPropagation();
+                }}
+              >
+                <div className="mx-auto w-full max-w-md">
+
+                  {/* Intro */}
+                  <motion.div
+                    initial={{
+                      opacity: 0,
+                      y: 16,
+                    }}
+                    animate={{
+                      opacity: 1,
+                      y: 0,
+                    }}
+                    transition={{
+                      duration: 0.55,
+                      ease: transitionEase,
+                    }}
+                  >
+                    <span className="font-mono text-[7px] font-bold uppercase tracking-[0.3em] text-sky-600">
+                      AXION / Evolução digital
+                    </span>
+
+                    <h2 className="mt-4 text-[clamp(2.45rem,11vw,3.2rem)] font-black uppercase leading-[0.86] tracking-[-0.052em]">
+                      Evoluir com
+                      <br />
+                      princípio.
+                      <br />
+
+                      <span className="text-sky-600">
+                        Crescer com
+                        <br />
+                        segurança.
+                      </span>
+                    </h2>
+
+                    <div className="mt-7 border-t border-slate-900/10 pt-5">
+                      <p className="text-[13px] font-semibold leading-[1.65] text-slate-700">
+                        A AXION ajuda empresas a evoluir tecnologicamente sem perder identidade,
+                        visão ou controlo.
+                      </p>
+
+                      <p className="mt-3 text-[11px] font-medium leading-[1.7] text-slate-500">
+                        Construímos websites, plataformas, sistemas internos, automações e
+                        integrações de AI alinhados com os processos reais do negócio e preparados
+                        para sustentar crescimento.
+                      </p>
+                    </div>
+                  </motion.div>
+
+                  {/* Stage selector */}
+                  <div className="mt-8 grid grid-cols-3 border-y border-slate-900/10">
+                    {(
+                      [
+                        'base',
+                        'structure',
+                        'evolution',
+                      ] as EvolutionStageKey[]
+                    ).map((stageKey) => {
+                      const item =
+                        evolutionStages[stageKey];
+
+                      const isActive =
+                        activeEvolutionStage ===
+                        stageKey;
+
+                      return (
+                        <button
+                          key={stageKey}
+                          type="button"
+                          onClick={() =>
+                            setActiveEvolutionStage(
+                              stageKey,
+                            )
+                          }
+                          className={`relative min-w-0 px-1 py-4 text-center transition-colors ${
+                            isActive
+                              ? 'text-sky-600'
+                              : 'text-slate-400'
+                          }`}
+                        >
+                          <div className="flex flex-col items-center gap-1.5">
+                            <span className="font-mono text-[7px] font-bold tracking-[0.16em]">
+                              {item.id}
+                            </span>
+
+                            <span className="text-[7px] font-black uppercase tracking-[0.14em]">
+                              {item.label}
+                            </span>
+                          </div>
+
+                          {isActive && (
+                            <motion.div
+                              layoutId="evolution-stage-line-mobile"
+                              className="absolute inset-x-0 bottom-[-1px] h-[2px] bg-sky-500"
+                              transition={{
+                                type: 'spring',
+                                stiffness: 280,
+                                damping: 28,
+                              }}
+                            />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Active stage */}
+                  <motion.div
+                    key={`mobile-evolution-${activeEvolutionStage}`}
+                    initial={{
+                      opacity: 0,
+                      y: 10,
+                    }}
+                    animate={{
+                      opacity: 1,
+                      y: 0,
+                    }}
+                    transition={{
+                      duration: 0.4,
+                      ease: transitionEase,
+                    }}
+                    className="py-8"
+                  >
+                    <span className="font-mono text-[7px] font-bold uppercase tracking-[0.28em] text-sky-600">
+                      {currentEvolutionStage.eyebrow}
+                    </span>
+
+                    <h3 className="mt-4 text-[clamp(1.85rem,8.5vw,2.6rem)] font-black leading-[0.96] tracking-[-0.04em]">
+                      {currentEvolutionStage.title}
+                    </h3>
+
+                    <p className="mt-5 text-[13px] font-medium leading-[1.75] text-slate-600">
+                      {currentEvolutionStage.body}
+                    </p>
+
+                    {/* Stage points */}
+                    <div className="mt-7 border-t border-slate-900/10">
+                      {currentEvolutionStage.points.map(
+                        (point, index) => (
+                          <div
+                            key={point}
+                            className="flex items-start gap-4 border-b border-slate-900/10 py-4"
+                          >
+                            <span className="mt-[2px] shrink-0 font-mono text-[7px] font-bold text-sky-600">
+                              {String(
+                                index + 1,
+                              ).padStart(
+                                2,
+                                '0',
+                              )}
+                            </span>
+
+                            <span className="text-[10px] font-bold uppercase leading-[1.5] tracking-[0.07em] text-slate-700">
+                              {point}
+                            </span>
+                          </div>
+                        ),
+                      )}
+                    </div>
+                  </motion.div>
+
+                  {/* Principles */}
+                  <div className="border-t border-slate-900/10">
+                    <div className="py-5">
+                      <span className="font-mono text-[7px] font-bold uppercase tracking-[0.22em] text-sky-600">
+                        01 / Identidade
+                      </span>
+
+                      <p className="mt-2 text-[11px] font-semibold leading-[1.6] text-slate-600">
+                        Evoluir sem descaracterizar o que torna o negócio reconhecível.
+                      </p>
+                    </div>
+
+                    <div className="border-t border-slate-900/10 py-5">
+                      <span className="font-mono text-[7px] font-bold uppercase tracking-[0.22em] text-sky-600">
+                        02 / Estrutura
+                      </span>
+
+                      <p className="mt-2 text-[11px] font-semibold leading-[1.6] text-slate-600">
+                        Construir primeiro uma base coerente para poder crescer com confiança.
+                      </p>
+                    </div>
+
+                    <div className="border-t border-slate-900/10 py-5">
+                      <span className="font-mono text-[7px] font-bold uppercase tracking-[0.22em] text-sky-600">
+                        03 / Segurança
+                      </span>
+
+                      <p className="mt-2 text-[11px] font-semibold leading-[1.6] text-slate-600">
+                        Adicionar capacidade sem perder controlo, clareza ou responsabilidade.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Mobile progression */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      lockAnimation();
+                      navigateDirectlyToStep(4);
+                    }}
+                    className="mt-8 flex w-full items-center justify-between border-t border-slate-900/15 py-6 text-left"
+                  >
+                    <div>
+                      <span className="block font-mono text-[7px] font-bold uppercase tracking-[0.26em] text-sky-600">
+                        Próxima etapa
+                      </span>
+
+                      <span className="mt-2 block text-[12px] font-black uppercase tracking-[0.12em] text-slate-900">
+                        Orçamento
+                      </span>
+                    </div>
+
+                    <ArrowRight
+                      size={16}
+                      className="text-sky-600"
+                    />
+                  </button>
+                </div>
+              </div>
+            </motion.section>
+          )}
+        </AnimatePresence>
+
+
 
         {/* GLOBAL MINIMALIST FOOTER */}
         {!isFooterVisible && (
@@ -1355,6 +2454,6 @@ export default function HomePage({ initialStep = 0, onBack, onNavigateToBudget, 
         )}
       </AnimatePresence>
 
-    </div>
+    </main>
   );
 }

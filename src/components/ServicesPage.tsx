@@ -1,132 +1,55 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { motion, useReducedMotion, useScroll, useSpring } from 'motion/react';
-import { ArrowDown, ArrowLeft, ArrowRight } from 'lucide-react';
+import {
+  useEffect,
+  useRef,
+} from 'react';
+
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useSpring,
+} from 'motion/react';
+
+import {
+  ArrowDown,
+  ArrowRight,
+  ChevronDown,
+} from 'lucide-react';
+
 import Logo from './Logo';
-import FloatingTriangles from './FloatingTriangles';
 import WebsiteFooter from './WebsiteFooter';
-import { serviceAreas, serviceBySlug, type ServiceArea } from '../data/services';
+
+import SpaceBackdrop from './home/SpaceBackdrop';
+
+import ServicesParticleStage from './services/ServicesParticleStage';
+
+import {
+  serviceAreas,
+  serviceBySlug,
+} from '../data/services';
+
+import {
+  servicesHubSeo,
+  servicesSeo,
+} from '../seo/seoConfig';
+
+
 
 interface ServicesPageProps {
   activeSlug?: string;
   onNavigateHome: () => void;
-  onNavigateHomeSection: (index: number) => void;
+  onNavigateHomeSection: (
+    index: number,
+  ) => void;
   onNavigateBudget: () => void;
-  onNavigateService: (slug: string) => void;
+  onNavigateService: (
+    slug: string,
+  ) => void;
   onNavigateServicesHub: () => void;
 }
 
-interface RevealProps {
-  children: ReactNode;
-  className?: string;
-  delay?: number;
-  direction?: 'up' | 'left' | 'right';
-}
-
-const transitionEase = [0.16, 1, 0.3, 1] as const;
-const sectionThemes = [
-  { section: 'bg-[#f7f9fc] text-slate-950', tone: 'light', muted: 'text-slate-600', quiet: 'text-slate-400', rule: 'bg-slate-900/12', watermark: 'text-slate-950/[0.025]' },
-  { section: 'bg-[#07111f] text-white', tone: 'dark', muted: 'text-slate-300', quiet: 'text-slate-500', rule: 'bg-white/12', watermark: 'text-white/[0.025]' },
-  { section: 'bg-[#eaf5fb] text-slate-950', tone: 'light', muted: 'text-slate-600', quiet: 'text-slate-400', rule: 'bg-sky-950/12', watermark: 'text-sky-950/[0.035]' },
-  { section: 'bg-white text-slate-950', tone: 'light', muted: 'text-slate-600', quiet: 'text-slate-400', rule: 'bg-slate-900/12', watermark: 'text-slate-950/[0.025]' },
-  { section: 'bg-[#0c1728] text-white', tone: 'dark', muted: 'text-slate-300', quiet: 'text-slate-500', rule: 'bg-white/12', watermark: 'text-white/[0.025]' },
-  { section: 'bg-[#eff7fb] text-slate-950', tone: 'light', muted: 'text-slate-600', quiet: 'text-slate-400', rule: 'bg-sky-950/12', watermark: 'text-sky-950/[0.03]' },
-] as const;
-
-const accentPositions = [
-  'right-[-12rem] top-[12%]',
-  'left-[-14rem] top-[18%]',
-  'right-[-10rem] bottom-[8%]',
-  'left-[-15rem] top-[28%]',
-  'right-[-13rem] top-[14%]',
-  'left-1/2 top-[4%] -translate-x-1/2',
-] as const;
-
-function Reveal({ children, className = '', delay = 0, direction = 'up' }: RevealProps) {
-  const shouldReduceMotion = useReducedMotion();
-  const offset = shouldReduceMotion
-    ? { x: 0, y: 0 }
-    : direction === 'left'
-      ? { x: -28, y: 0 }
-      : direction === 'right'
-        ? { x: 28, y: 0 }
-        : { x: 0, y: 28 };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, ...offset }}
-      whileInView={{ opacity: 1, x: 0, y: 0 }}
-      viewport={{ once: false, amount: 0.16 }}
-      transition={{ duration: shouldReduceMotion ? 0.01 : 0.7, delay: shouldReduceMotion ? 0 : delay, ease: transitionEase }}
-      className={className}
-    >
-      {children}
-    </motion.div>
-  );
-}
-
-function ServiceIndexMark({ service }: { service: ServiceArea }) {
-  return <span className="font-mono text-[9px] font-bold uppercase tracking-[0.3em] text-sky-500">{service.id} / 06</span>;
-}
-
-function SectionTriangles({ index, isDark, reduceMotion }: { index: number; isDark: boolean; reduceMotion: boolean | null }) {
-  const triangles = [
-    { x: 6, y: 7, size: 78, opacity: 0.11, driftX: 16, driftY: -18, rotation: -8 },
-    { x: 83, y: 16, size: 126, opacity: 0.08, driftX: -20, driftY: 24, rotation: 14 },
-    { x: 31, y: 25, size: 42, opacity: 0.1, driftX: 12, driftY: -16, rotation: 28 },
-    { x: 68, y: 34, size: 64, opacity: 0.09, driftX: -15, driftY: -20, rotation: -19 },
-    { x: 10, y: 43, size: 108, opacity: 0.075, driftX: 22, driftY: 18, rotation: 11 },
-    { x: 48, y: 53, size: 50, opacity: 0.12, driftX: -12, driftY: -14, rotation: -27 },
-    { x: 84, y: 62, size: 82, opacity: 0.085, driftX: -18, driftY: 22, rotation: 18 },
-    { x: 17, y: 72, size: 46, opacity: 0.13, driftX: 13, driftY: -14, rotation: 22 },
-    { x: 59, y: 82, size: 116, opacity: 0.07, driftX: 20, driftY: -24, rotation: -12 },
-    { x: 78, y: 91, size: 62, opacity: 0.1, driftX: -12, driftY: -20, rotation: -18 },
-  ];
-
-  return (
-    <div aria-hidden="true" className={`pointer-events-none absolute inset-0 z-0 overflow-hidden ${isDark ? 'text-white' : 'text-slate-800 mix-blend-multiply'}`}>
-      {triangles.map((triangle, triangleIndex) => {
-        const shiftedX = (triangle.x + index * 9 + triangleIndex * 3) % 88;
-        const direction = (index + triangleIndex) % 2 === 0 ? 1 : -1;
-
-        return (
-          <motion.div
-            key={triangleIndex}
-            className="absolute"
-            style={{
-              left: `${shiftedX}%`,
-              top: `${triangle.y}%`,
-              width: triangle.size,
-              height: triangle.size,
-              opacity: isDark ? triangle.opacity : Math.min(triangle.opacity * 3.2, 0.4),
-            }}
-            animate={reduceMotion ? undefined : {
-              x: [0, triangle.driftX * direction, 0],
-              y: [0, triangle.driftY, 0],
-              rotate: [triangle.rotation, triangle.rotation + 12 * direction, triangle.rotation],
-              scale: [1, 1.04, 1],
-            }}
-            transition={{
-              duration: 9 + index * 0.8 + triangleIndex * 1.4,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
-          >
-            <svg viewBox="0 0 100 100" className={`h-full w-full ${triangleIndex === 1 ? 'blur-[0.6px]' : ''}`}>
-              <path
-                d="M50 11 91 84H9Z"
-                fill="currentColor"
-                fillOpacity={isDark ? 0.04 : 0.07}
-                stroke="currentColor"
-                strokeWidth={triangleIndex % 2 === 0 ? (isDark ? 1.2 : 1.55) : (isDark ? 0.8 : 1.1)}
-              />
-              <path d="M50 11 50 84" fill="none" stroke="currentColor" strokeWidth="0.45" opacity="0.5" />
-            </svg>
-          </motion.div>
-        );
-      })}
-    </div>
-  );
-}
+const transitionEase =
+  [0.16, 1, 0.3, 1] as const;
 
 export default function ServicesPage({
   activeSlug,
@@ -136,188 +59,897 @@ export default function ServicesPage({
   onNavigateService,
   onNavigateServicesHub,
 }: ServicesPageProps) {
-  const shouldReduceMotion = useReducedMotion();
-  const [headerTone, setHeaderTone] = useState<'light' | 'dark'>('dark');
-  const serviceRefs = useRef<Record<string, HTMLElement | null>>({});
-  const initialSlug = useRef(activeSlug);
-  const didInitialScroll = useRef(false);
-  const activeService = serviceBySlug(activeSlug);
-  const { scrollYProgress } = useScroll();
-  const progressScale = useSpring(scrollYProgress, { stiffness: 120, damping: 28, restDelta: 0.001 });
+  const shouldReduceMotion =
+    useReducedMotion();
 
+  const activeService =
+    serviceBySlug(activeSlug);
+
+  const activeServiceSeo =
+    activeService
+      ? servicesSeo[activeService.slug]
+      : undefined;
+
+  
+
+  const heroDescription =
+    activeServiceSeo
+      ? activeServiceSeo.description
+      : servicesHubSeo.description;
+
+  const heroRef =
+    useRef<HTMLElement | null>(
+      null,
+    );
+
+  const serviceRefs =
+    useRef<
+      Record<
+        string,
+        HTMLElement | null
+      >
+    >({});
+
+  const didInitialScroll =
+    useRef(false);
+
+  
+
+  /*
+   * Continuous particle timeline.
+   *
+   * 0 = Hero cloud
+   * 1 = Branding
+   * 2 = Web
+   * 3 = Marketing
+   * 4 = Social
+   * 5 = CRM
+   * 6 = AI
+   *
+   * This ref is deliberately not React state: it is updated on every
+   * animation frame while scrolling, without rerendering the whole page.
+   */
+  const initialParticleScrollPosition =
+    activeService
+      ? Math.max(
+          0,
+          serviceAreas.findIndex(
+            (service) =>
+              service.slug === activeService.slug,
+          ) + 1,
+        )
+      : 0;
+
+  const particleScrollPositionRef =
+    useRef(initialParticleScrollPosition);
+
+  const { scrollYProgress } =
+    useScroll();
+
+  const progressScale =
+    useSpring(
+      scrollYProgress,
+      {
+        stiffness: 120,
+        damping: 28,
+        restDelta: 0.001,
+      },
+    );
+
+  
+
+  /*
+   * Direct navigation:
+   *
+   * /servicos/<slug>
+   *
+   * still scrolls to the exact service.
+   */
   useEffect(() => {
     if (!activeService) return;
-    const isInitialNavigation = activeService.slug === initialSlug.current && !didInitialScroll.current;
-    const frame = window.requestAnimationFrame(() => {
-      serviceRefs.current[activeService.slug]?.scrollIntoView({
-        block: 'start',
-        behavior: shouldReduceMotion || isInitialNavigation ? 'auto' : 'smooth',
-      });
-      if (isInitialNavigation) didInitialScroll.current = true;
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [activeService, shouldReduceMotion]);
 
+    /*
+    * Internal navigation from the service index
+    * has already performed the scroll synchronously.
+    *
+    * Updating the pathname changes activeSlug, which
+    * triggers this effect again. In that case we must
+    * NOT perform a second scroll.
+    */
+    
+
+    let firstFrame = 0;
+    let secondFrame = 0;
+
+    const scrollToActiveService = (
+      behavior: ScrollBehavior,
+    ) => {
+      const target =
+        serviceRefs.current[
+          activeService.slug
+        ];
+
+      if (!target) return;
+
+      const headerOffset = 76;
+
+      const targetTop =
+        target.getBoundingClientRect()
+          .top +
+        window.scrollY -
+        headerOffset;
+
+      window.scrollTo({
+        top: Math.max(
+          0,
+          targetTop,
+        ),
+        left: 0,
+        behavior,
+      });
+
+      didInitialScroll.current = true;
+    };
+
+    firstFrame =
+      window.requestAnimationFrame(
+        () => {
+          secondFrame =
+            window.requestAnimationFrame(
+              () => {
+                /*
+                * This path is only for opening a
+                * /servicos/<slug> route directly,
+                * browser history navigation, etc.
+                */
+                scrollToActiveService(
+                  'auto',
+                );
+              },
+            );
+        },
+      );
+
+    return () => {
+      window.cancelAnimationFrame(
+        firstFrame,
+      );
+
+      window.cancelAnimationFrame(
+        secondFrame,
+      );
+    };
+  }, [
+    activeService?.slug,
+  ]);
+  /*
+   * Scroll-synchronised particle morphing.
+   *
+   * Instead of telling the canvas "animate to the next shape", we derive
+   * an exact position on a 0 -> 6 timeline from the current scroll position.
+   * The canvas reads this ref directly on each frame.
+   *
+   * A small hold zone around every section centre gives each shape time to
+   * exist fully formed before the next morph begins.
+   */
   useEffect(() => {
     let frame = 0;
-    const updateHeaderTone = () => {
-      window.cancelAnimationFrame(frame);
-      frame = window.requestAnimationFrame(() => {
-        const sections = Array.from(document.querySelectorAll<HTMLElement>('[data-header-tone]'));
-        const current = sections.find((section) => {
-          const rect = section.getBoundingClientRect();
-          return rect.top <= 78 && rect.bottom > 78;
-        });
-        setHeaderTone(current?.dataset.headerTone === 'light' ? 'light' : 'dark');
-      });
+
+    const clamp01 = (value: number) =>
+      Math.min(1, Math.max(0, value));
+
+    const smoothstep = (value: number) => {
+      const t = clamp01(value);
+      return t * t * (3 - 2 * t);
     };
-    updateHeaderTone();
-    window.addEventListener('scroll', updateHeaderTone, { passive: true });
-    window.addEventListener('resize', updateHeaderTone);
+
+    const getOrderedSections = () => {
+      const elements: HTMLElement[] = [];
+
+      if (heroRef.current) {
+        elements.push(heroRef.current);
+      }
+
+      serviceAreas.forEach((service) => {
+        const element =
+          serviceRefs.current[service.slug];
+
+        if (element) {
+          elements.push(element);
+        }
+      });
+
+      return elements;
+    };
+
+    const updateParticleScrollPosition = () => {
+      frame = 0;
+
+      const elements = getOrderedSections();
+
+      if (elements.length === 0) return;
+
+      const viewportCentre =
+        window.scrollY + window.innerHeight * 0.5;
+
+      const anchors = elements.map((element) => {
+        const rect = element.getBoundingClientRect();
+
+        return (
+          rect.top +
+          window.scrollY +
+          Math.min(rect.height * 0.5, window.innerHeight * 0.5)
+        );
+      });
+
+      if (viewportCentre <= anchors[0]) {
+        particleScrollPositionRef.current = 0;
+        return;
+      }
+
+      const lastIndex = anchors.length - 1;
+
+      if (viewportCentre >= anchors[lastIndex]) {
+        particleScrollPositionRef.current = lastIndex;
+        return;
+      }
+
+      for (let index = 0; index < lastIndex; index += 1) {
+        const start = anchors[index];
+        const end = anchors[index + 1];
+
+        if (
+          viewportCentre >= start &&
+          viewportCentre <= end
+        ) {
+          const rawProgress = clamp01(
+            (viewportCentre - start) /
+              Math.max(1, end - start),
+          );
+
+          /*
+           * 0.00 -> 0.18 : current shape fully formed
+           * 0.18 -> 0.82 : deterministic scroll-driven morph
+           * 0.82 -> 1.00 : next shape fully formed
+           */
+          const HOLD = 0.18;
+
+          let morphProgress = 0;
+
+          if (rawProgress >= 1 - HOLD) {
+            morphProgress = 1;
+          } else if (rawProgress > HOLD) {
+            morphProgress = smoothstep(
+              (rawProgress - HOLD) /
+                (1 - HOLD * 2),
+            );
+          }
+
+          particleScrollPositionRef.current =
+            index + morphProgress;
+
+          return;
+        }
+      }
+    };
+
+    const scheduleUpdate = () => {
+      if (frame !== 0) return;
+
+      frame = window.requestAnimationFrame(
+        updateParticleScrollPosition,
+      );
+    };
+
+    const observedSections = getOrderedSections();
+
+    const resizeObserver = new ResizeObserver(
+      scheduleUpdate,
+    );
+
+    observedSections.forEach((element) =>
+      resizeObserver.observe(element),
+    );
+
+    scheduleUpdate();
+
+    window.addEventListener(
+      'scroll',
+      scheduleUpdate,
+      { passive: true },
+    );
+
+    window.addEventListener(
+      'resize',
+      scheduleUpdate,
+    );
+
     return () => {
-      window.cancelAnimationFrame(frame);
-      window.removeEventListener('scroll', updateHeaderTone);
-      window.removeEventListener('resize', updateHeaderTone);
+      if (frame !== 0) {
+        window.cancelAnimationFrame(frame);
+      }
+
+      resizeObserver.disconnect();
+
+      window.removeEventListener(
+        'scroll',
+        scheduleUpdate,
+      );
+
+      window.removeEventListener(
+        'resize',
+        scheduleUpdate,
+      );
     };
   }, []);
 
-  const isHeaderDark = headerTone === 'dark';
-
   return (
-    <main className="min-h-screen w-full overflow-x-hidden bg-white text-slate-950 selection:bg-sky-400/30 selection:text-slate-950">
-      <motion.div className="fixed inset-x-0 top-0 z-[70] h-[2px] origin-left bg-sky-400" style={{ scaleX: progressScale }} />
+    <main className="relative min-h-screen w-full overflow-x-hidden bg-[#010103] text-white selection:bg-sky-400/30">
+      {/* Page progress */}
+      <motion.div
+        className="fixed inset-x-0 top-0 z-[80] h-[2px] origin-left bg-sky-400"
+        style={{
+          scaleX:
+            progressScale,
+        }}
+      />
 
-      <div className={`pointer-events-none fixed inset-x-0 top-0 z-50 flex items-center justify-between px-6 py-6 transition-colors duration-500 md:px-8 ${isHeaderDark ? 'text-white' : 'text-slate-950'}`}>
-        <button type="button" onClick={onNavigateHome} className="pointer-events-auto group flex cursor-pointer items-center gap-3 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-500" aria-label="Ir para o início do website AXION">
-          <Logo theme={isHeaderDark ? 'dark' : 'light'} glow={false} className="h-5 w-5" />
-          <span className="text-[10px] font-black uppercase tracking-[0.32em]">AXION</span>
-        </button>
-
-        <button type="button" onClick={onNavigateHome} className={`pointer-events-auto group flex cursor-pointer items-center gap-2 border-b pb-1.5 text-[8px] font-black uppercase tracking-[0.2em] transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-500 ${isHeaderDark ? 'border-white/25 text-white hover:border-sky-400 hover:text-sky-300' : 'border-slate-900/20 text-slate-800 hover:border-sky-500 hover:text-sky-600'}`}>
-          <ArrowLeft size={11} className="transition-transform duration-300 group-hover:-translate-x-1" />
-          <span>Início</span>
-        </button>
+      {/* Persistent galactic scene */}
+      <div className="pointer-events-none fixed inset-0 z-0">
+        <SpaceBackdrop />
       </div>
 
-      <section data-header-tone="dark" className="relative flex min-h-screen items-center overflow-hidden bg-[#040a13] px-6 pb-20 pt-32 text-white md:px-12">
-        <motion.div className="absolute -right-[18rem] top-1/2 h-[48rem] w-[48rem] -translate-y-1/2 rounded-full bg-sky-500/20 blur-[150px]" animate={shouldReduceMotion ? undefined : { scale: [0.92, 1.08, 0.92], opacity: [0.16, 0.28, 0.16] }} transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }} />
-        <div className="absolute inset-0 opacity-50"><FloatingTriangles theme="dark" /></div>
-        <motion.div aria-hidden="true" className="absolute -right-20 top-1/2 h-[42rem] w-[42rem] -translate-y-1/2 opacity-[0.055]" initial={{ opacity: 0, scale: 0.88, rotate: shouldReduceMotion ? 0 : -4 }} whileInView={{ opacity: 0.055, scale: 1, rotate: 0 }} viewport={{ once: false, amount: 0.15 }} transition={{ duration: shouldReduceMotion ? 0.01 : 1.4, ease: transitionEase }}>
-          <Logo theme="dark" glow={false} className="h-full w-full" />
-        </motion.div>
+      {/* Persistent particle system */}
+      <div className="pointer-events-none fixed inset-0 z-[2]">
+        <ServicesParticleStage
+          scrollPositionRef={
+            particleScrollPositionRef
+          }
+          reduceMotion={
+            shouldReduceMotion
+          }
+        />
+      </div> 
 
-        <div className="relative z-10 mx-auto w-full max-w-7xl">
-          <motion.span initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: false, amount: 0.4 }} transition={{ duration: 0.5, ease: transitionEase }} className="font-mono text-[9px] font-bold uppercase tracking-[0.34em] text-sky-400">AXION / Ecossistema digital</motion.span>
-          <motion.h1 initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 36 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: false, amount: 0.3 }} transition={{ duration: 0.85, delay: shouldReduceMotion ? 0 : 0.08, ease: transitionEase }} className="mt-7 max-w-6xl text-[clamp(3.25rem,6.7vw,6.8rem)] font-black uppercase leading-[0.82] tracking-[-0.055em]">
-            Ecossistemas digitais<br /><span className="text-sky-400">para empresas.</span>
+      {/* Dark readability veil */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 z-[3]"
+        style={{
+          background:
+            'linear-gradient(90deg, rgba(0,0,0,0.14) 0%, rgba(0,0,0,0.1) 34%, rgba(0,0,0,0.2) 48%, rgba(0,0,0,0.56) 66%, rgba(0,0,0,0.76) 100%)',
+        }}
+      />
+
+      {/* Header */}
+      <header className="pointer-events-none fixed inset-x-0 top-0 z-50 flex items-center justify-between px-6 py-6 text-white md:px-8">
+        <button
+          type="button"
+          onClick={
+            onNavigateHome
+          }
+          className="pointer-events-auto group flex cursor-pointer items-center gap-3 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-400"
+          aria-label="Ir para o início do website AXION"
+        >
+          <Logo
+            theme="dark"
+            glow={false}
+            className="h-5 w-5"
+          />
+
+          <span className="text-[10px] font-black uppercase tracking-[0.32em]">
+            AXION
+          </span>
+        </button>
+
+        
+      </header>
+
+      {/* HERO */}
+      <section
+        ref={heroRef}
+        data-particle-shape="cloud"
+        className="relative z-10 flex min-h-screen items-center justify-center overflow-x-hidden px-5 pb-16 pt-28 text-center sm:px-6 sm:pb-20 sm:pt-32 md:px-12 md:pb-24"
+      >
+        <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col items-center">
+          <motion.span
+            initial={{
+              opacity: 0,
+              y:
+                shouldReduceMotion
+                  ? 0
+                  : 10,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.55,
+              ease:
+                transitionEase,
+            }}
+            className="font-mono text-[9px] font-bold uppercase tracking-[0.36em] text-sky-400"
+          >
+            AXION / Serviços
+          </motion.span>
+
+          <motion.h1
+            initial={{
+              opacity: 0,
+              y:
+                shouldReduceMotion
+                  ? 0
+                  : 28,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.85,
+              delay:
+                shouldReduceMotion
+                  ? 0
+                  : 0.08,
+              ease:
+                transitionEase,
+            }}
+            className="mt-7 max-w-5xl text-[clamp(2.55rem,12vw,7rem)] font-black uppercase leading-[0.86] tracking-[-0.05em] sm:mt-8"
+          >
+            <>
+              Os nossos
+              <br />
+
+              <span className="text-sky-400">
+                serviços.
+              </span>
+            </>
           </motion.h1>
 
-          <div className="mt-12 grid gap-10 border-t border-white/12 pt-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
-            <motion.div initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: false, amount: 0.3 }} transition={{ duration: 0.65, delay: shouldReduceMotion ? 0 : 0.24, ease: transitionEase }} className="max-w-md">
-              <span className="font-mono text-[8px] font-bold uppercase tracking-[0.28em] text-slate-500">O ecossistema AXION</span>
-              <h2 className="mt-3 text-xl font-black uppercase leading-tight tracking-[-0.025em] text-white md:text-2xl">
-                Marketing <span className="text-sky-400">+</span> Tecnologia <span className="text-sky-400">+</span> Inteligência Artificial
-              </h2>
-              <p className="mt-4 text-sm font-medium leading-relaxed text-slate-300 md:text-base">
-                Três dimensões ligadas numa única estrutura — pensada para transformar ambição em progresso digital concreto.
-              </p>
-            </motion.div>
-            <motion.nav initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: false, amount: 0.2 }} transition={{ duration: 0.65, delay: shouldReduceMotion ? 0 : 0.34 }} className="grid gap-x-10 sm:grid-cols-2" aria-label="Índice de serviços AXION">
-              {serviceAreas.map((service, index) => (
-                <motion.button key={service.slug} type="button" onClick={() => onNavigateService(service.slug)} initial={{ opacity: 0, x: shouldReduceMotion ? 0 : 16 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: false, amount: 0.45 }} transition={{ duration: 0.45, delay: shouldReduceMotion ? 0 : index * 0.055, ease: transitionEase }} className="group flex cursor-pointer items-center justify-between border-b border-white/12 py-4 text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-400">
-                  <span className="flex items-center gap-4"><span className="font-mono text-[8px] text-sky-400">{service.id}</span><span className="text-[10px] font-black uppercase tracking-[0.04em] text-slate-200 transition-colors group-hover:text-white">{service.title}</span></span>
-                  <ArrowDown size={12} className="text-slate-600 transition-all duration-300 group-hover:translate-y-1 group-hover:text-sky-400" />
-                </motion.button>
-              ))}
-            </motion.nav>
+          <motion.p
+            initial={{
+              opacity: 0,
+              y:
+                shouldReduceMotion
+                  ? 0
+                  : 16,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.65,
+              delay:
+                shouldReduceMotion
+                  ? 0
+                  : 0.2,
+              ease:
+                transitionEase,
+            }}
+            className="mt-6 max-w-xl text-sm font-semibold leading-[1.7] text-white/92 sm:mt-7 sm:text-base md:text-lg"
+          >
+            {activeServiceSeo ? (
+              heroDescription
+            ) : (
+              <>
+                Marketing,
+                tecnologia e
+                inteligência
+                artificial ligados
+                numa única
+                estrutura digital.
+              </>
+            )}
+          </motion.p>
+
+          {/* Service index */}
+          <nav
+            aria-label="Índice de serviços AXION"
+            className="mt-10 grid w-full max-w-5xl grid-cols-1 gap-x-6 self-center sm:mt-12 sm:grid-cols-2 sm:gap-x-8 lg:mt-14 lg:grid-cols-3 lg:gap-x-10"
+          >
+            {serviceAreas.map(
+              (service, index) => (
+                <a
+                  key={service.slug}
+                  href={`#${service.slug}`}
+                  onMouseDown={(event) => {
+                    event.preventDefault();
+                  }}
+                  className="group flex min-w-0 cursor-pointer items-center justify-between gap-4 border-b border-white/12 py-4 text-left transition-colors hover:border-white/35 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-400"
+                >
+                  <span className="flex min-w-0 items-center gap-3">
+                    <span className="shrink-0 font-mono text-[8px] text-sky-400">
+                      {service.id}
+                    </span>
+
+                    <span className="truncate text-[9px] font-black uppercase tracking-[0.055em] text-white/72 transition-colors group-hover:text-white">
+                      {service.title}
+                    </span>
+                  </span>
+
+                  <ArrowDown
+                    size={11}
+                    className="shrink-0 text-white/30 transition-all duration-300 group-hover:translate-y-1 group-hover:text-sky-400"
+                  />
+                </a>
+              ),
+            )}
+          </nav>
+
+          <div className="mt-14 flex flex-col items-center gap-3">
+            <span className="font-mono text-[7px] uppercase tracking-[0.28em] text-white/35">
+              Explorar
+            </span>
+
+            <div className="h-10 w-px bg-gradient-to-b from-sky-400/80 to-transparent" />
           </div>
         </div>
       </section>
 
-      {serviceAreas.map((service, index) => {
-        const theme = sectionThemes[index];
-        const Icon = service.icon;
-        const isDark = theme.tone === 'dark';
-        const isReversed = index % 2 === 1;
-        const variant = index % 3;
+      {/* SERVICES */}
+      {serviceAreas.map(
+        (service) => {
+          const Icon =
+            service.icon;
 
-        return (
-          <section key={service.slug} id={service.slug} ref={(node) => { serviceRefs.current[service.slug] = node; }} data-header-tone={theme.tone} className={`relative scroll-mt-[76px] overflow-hidden px-6 py-28 md:px-12 md:py-40 ${theme.section}`}>
-            <motion.div aria-hidden="true" className={`absolute h-[34rem] w-[34rem] rounded-full bg-sky-400/15 blur-[150px] ${accentPositions[index]}`} animate={shouldReduceMotion ? undefined : { x: [0, index % 2 === 0 ? -26 : 26, 0], y: [0, 22, 0], opacity: [0.12, 0.24, 0.12] }} transition={{ duration: 11 + index, repeat: Infinity, ease: 'easeInOut' }} />
-            <SectionTriangles index={index} isDark={isDark} reduceMotion={shouldReduceMotion} />
-            <span aria-hidden="true" className={`pointer-events-none absolute -right-5 top-16 select-none text-[clamp(11rem,27vw,27rem)] font-black leading-none tracking-[-0.08em] ${theme.watermark}`}>{service.id}</span>
+          const visibleServices =
+            service.services.slice(
+              0,
+              5,
+            );
 
-            <div className="relative z-10 mx-auto w-full max-w-7xl">
-              <div className={`grid gap-12 lg:grid-cols-12 lg:items-end ${variant === 2 ? 'lg:items-start' : ''}`}>
-                <Reveal direction={isReversed ? 'right' : 'left'} className={`lg:row-start-1 lg:col-span-7 ${isReversed ? 'lg:col-start-6' : 'lg:col-start-1'}`}>
-                  <div className="flex items-center gap-5"><ServiceIndexMark service={service} /><span className={`h-px w-16 ${theme.rule}`} /><Icon size={18} className="text-sky-500" strokeWidth={1.5} /></div>
-                  <h2 className="mt-8 max-w-4xl text-[clamp(3rem,6.5vw,7rem)] font-black uppercase leading-[0.88] tracking-[-0.05em]">{service.title}</h2>
-                </Reveal>
-                <Reveal delay={0.1} direction={isReversed ? 'left' : 'right'} className={`lg:row-start-1 lg:col-span-4 ${isReversed ? 'lg:col-start-1' : 'lg:col-start-9'}`}>
-                  <p className={`text-base font-semibold leading-relaxed md:text-lg ${theme.muted}`}>{service.intro}</p>
-                </Reveal>
-              </div>
+          const remainingServices =
+            service.services.slice(
+              5,
+            );
 
-              <motion.div initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 }} viewport={{ once: false, amount: 0.5 }} transition={{ duration: shouldReduceMotion ? 0.01 : 1, ease: transitionEase }} className={`my-16 h-px origin-left md:my-24 ${theme.rule}`} />
+          return (
+            <section
+              key={
+                service.slug
+              }
+              id={
+                service.slug
+              }
+              ref={(node) => {
+                serviceRefs.current[
+                  service.slug
+                ] = node;
+              }}
+              data-particle-shape={
+                service.slug
+              }
+              className="relative z-10 flex min-h-screen scroll-mt-[76px] items-center px-6 py-28 md:px-12 lg:py-32"
+            >
+              <div className="mx-auto grid w-full max-w-7xl gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+                {/* Left side intentionally belongs to the persistent particle stage */}
+                <div
+                  aria-hidden="true"
+                  className="hidden min-h-[36rem] lg:block"
+                />
 
-              <div className={`grid gap-16 lg:grid-cols-12 ${variant === 1 ? 'lg:gap-24' : ''}`}>
-                <Reveal className={`${variant === 1 ? 'lg:col-span-7 lg:col-start-6' : 'lg:col-span-7'}`}>
-                  <span className={`font-mono text-[8px] font-bold uppercase tracking-[0.28em] ${theme.quiet}`}>O que fazemos</span>
-                  <p className="mt-6 max-w-4xl text-2xl font-bold leading-[1.24] tracking-[-0.025em] sm:text-3xl md:text-4xl">{service.detail}</p>
-                </Reveal>
-                <Reveal delay={0.1} className={`${variant === 1 ? 'lg:col-span-4 lg:col-start-1 lg:row-start-1' : 'lg:col-span-4 lg:col-start-9'}`}>
-                  <span className="font-mono text-[8px] font-bold uppercase tracking-[0.28em] text-sky-500">Vantagens para a empresa</span>
-                  <ol className="mt-6">
-                    {service.benefits.map((benefit, benefitIndex) => (
-                      <motion.li key={benefit} initial={{ opacity: 0, x: shouldReduceMotion ? 0 : 14 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: false, amount: 0.5 }} transition={{ duration: shouldReduceMotion ? 0.01 : 0.5, delay: shouldReduceMotion ? 0 : benefitIndex * 0.07, ease: transitionEase }} className={`grid grid-cols-[2rem_1fr] gap-3 border-t py-5 first:border-t-0 first:pt-0 ${isDark ? 'border-white/12' : 'border-slate-900/12'}`}>
-                        <span className="font-mono text-[8px] text-sky-500">0{benefitIndex + 1}</span><span className={`text-sm font-medium leading-relaxed ${theme.muted}`}>{benefit}</span>
-                      </motion.li>
-                    ))}
-                  </ol>
-                </Reveal>
-              </div>
+                {/* Content */}
+                <div
+              
+                  className="relative"
+                >
+                  <div className="flex items-center gap-4">
+                    <span className="font-mono text-[9px] font-bold uppercase tracking-[0.3em] text-sky-400">
+                      {
+                        service.id
+                      }{' '}
+                      / 06
+                    </span>
 
-              <div className="mt-24 grid gap-12 lg:mt-36 lg:grid-cols-12">
-                <Reveal direction="left" className="lg:col-span-3">
-                  <span className={`font-mono text-[8px] font-bold uppercase tracking-[0.28em] ${theme.quiet}`}>Principais soluções</span>
-                  <p className={`mt-4 text-sm font-medium leading-relaxed ${theme.muted}`}>Uma abordagem modular, ajustada à maturidade e às prioridades de cada empresa.</p>
-                </Reveal>
-                <div className="lg:col-span-9">
-                  {service.services.map((item, itemIndex) => (
-                    <motion.div key={item} initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 14 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: false, amount: 0.7 }} transition={{ duration: shouldReduceMotion ? 0.01 : 0.48, delay: shouldReduceMotion ? 0 : Math.min(itemIndex * 0.035, 0.25), ease: transitionEase }} className={`group grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 border-t py-4 last:border-b sm:py-5 ${isDark ? 'border-white/12' : 'border-slate-900/12'}`}>
-                      <span className={`font-mono text-[8px] ${theme.quiet}`}>{String(itemIndex + 1).padStart(2, '0')}</span><span className="text-sm font-bold uppercase leading-tight tracking-[0.01em] sm:text-base">{item}</span><span className="h-1.5 w-1.5 rounded-full bg-sky-400 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                    </motion.div>
-                  ))}
+                    <span className="h-px w-10 bg-white/15" />
+
+                    <Icon
+                      size={17}
+                      strokeWidth={
+                        1.4
+                      }
+                      className="text-white/55"
+                    />
+                  </div>
+
+                  <h2 className="mt-7 max-w-xl text-[clamp(2.8rem,5.4vw,5.8rem)] font-black uppercase leading-[0.87] tracking-[-0.052em]">
+                    {
+                      service.title
+                    }
+                  </h2>
+
+                  <p className="mt-7 max-w-xl text-base font-semibold leading-[1.65] text-slate-200 md:text-lg">
+                    {
+                      service.desc
+                    }
+                  </p>
+
+                  <p className="mt-4 max-w-xl text-sm font-medium leading-[1.75] text-slate-400">
+                    {
+                      service.intro
+                    }
+                  </p>
+
+                  {/* Key capabilities */}
+                  <div className="mt-9">
+                    <span className="font-mono text-[8px] font-bold uppercase tracking-[0.26em] text-white/35">
+                      Capacidades-chave
+                    </span>
+
+                    <div className="mt-4 flex max-w-xl flex-wrap gap-2">
+                      {visibleServices.map(
+                        (
+                          item,
+                        ) => (
+                          <span
+                            key={
+                              item
+                            }
+                            className="rounded-full border border-white/14 bg-white/[0.05] px-3 py-2 text-[8px] font-bold uppercase tracking-[0.1em] text-white/78 backdrop-blur-md"
+                          >
+                            {
+                              item
+                            }
+                          </span>
+                        ),
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Full existing content remains accessible */}
+                  <details className="group mt-10 max-w-xl border-y border-white/10">
+                    <summary className="flex cursor-pointer list-none items-center justify-between py-5">
+                      <span className="text-[9px] font-black uppercase tracking-[0.18em] text-white/65 transition-colors group-open:text-white">
+                        Explorar em
+                        detalhe
+                      </span>
+
+                      <ChevronDown
+                        size={13}
+                        className="text-sky-400 transition-transform duration-300 group-open:rotate-180"
+                      />
+                    </summary>
+
+                    <div className="space-y-10 border-t border-white/10 pb-8 pt-7">
+                      <div>
+                        <span className="font-mono text-[8px] uppercase tracking-[0.24em] text-sky-400">
+                          O que
+                          fazemos
+                        </span>
+
+                        <p className="mt-4 text-sm font-medium leading-[1.8] text-slate-300">
+                          {
+                            service.detail
+                          }
+                        </p>
+                      </div>
+
+                      {remainingServices.length >
+                        0 && (
+                        <div>
+                          <span className="font-mono text-[8px] uppercase tracking-[0.24em] text-sky-400">
+                            Outras
+                            capacidades
+                          </span>
+
+                          <div className="mt-4">
+                            {remainingServices.map(
+                              (
+                                item,
+                                index,
+                              ) => (
+                                <div
+                                  key={
+                                    item
+                                  }
+                                  className="grid grid-cols-[2rem_1fr] gap-3 border-t border-white/8 py-3 first:border-t-0"
+                                >
+                                  <span className="font-mono text-[7px] text-white/25">
+                                    {String(
+                                      index +
+                                        6,
+                                    ).padStart(
+                                      2,
+                                      '0',
+                                    )}
+                                  </span>
+
+                                  <span className="text-xs font-semibold text-slate-300">
+                                    {
+                                      item
+                                    }
+                                  </span>
+                                </div>
+                              ),
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      <div>
+                        <span className="font-mono text-[8px] uppercase tracking-[0.24em] text-sky-400">
+                          Vantagens
+                        </span>
+
+                        <div className="mt-4">
+                          {service.benefits.map(
+                            (
+                              benefit,
+                              index,
+                            ) => (
+                              <div
+                                key={
+                                  benefit
+                                }
+                                className="grid grid-cols-[2rem_1fr] gap-3 border-t border-white/8 py-3 first:border-t-0"
+                              >
+                                <span className="font-mono text-[7px] text-white/25">
+                                  0
+                                  {index +
+                                    1}
+                                </span>
+
+                                <span className="text-xs font-medium leading-relaxed text-slate-400">
+                                  {
+                                    benefit
+                                  }
+                                </span>
+                              </div>
+                            ),
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span className="font-mono text-[8px] uppercase tracking-[0.24em] text-sky-400">
+                          Ecossistema
+                          AXION
+                        </span>
+
+                        <p className="mt-4 text-sm font-medium leading-[1.8] text-slate-300">
+                          {
+                            service.ecosystem
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  </details>
+
+                  <button
+                    type="button"
+                    onClick={
+                      onNavigateBudget
+                    }
+                    className="group mt-9 inline-flex cursor-pointer items-center gap-4 border-b border-white/25 pb-2.5 text-[9px] font-black uppercase tracking-[0.2em] text-white transition-colors hover:border-sky-400 hover:text-sky-300 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-400"
+                  >
+                    <span>
+                      Falar sobre
+                      este serviço
+                    </span>
+
+                    <ArrowRight
+                      size={12}
+                      className="transition-transform duration-300 group-hover:translate-x-1.5"
+                    />
+                  </button>
                 </div>
               </div>
+            </section>
+          );
+        },
+      )}
 
-              <Reveal className="mt-24 md:mt-36">
-                <div className={`relative grid gap-8 border-y py-10 md:py-14 lg:grid-cols-[0.7fr_1.3fr] lg:items-center ${isDark ? 'border-white/12' : 'border-slate-900/12'}`}>
-                  <span className="font-mono text-[8px] font-bold uppercase tracking-[0.28em] text-sky-500">Ligação ao ecossistema AXION</span><p className={`text-lg font-semibold leading-relaxed md:text-2xl ${theme.muted}`}>{service.ecosystem}</p>
-                </div>
-              </Reveal>
+      {/* Final CTA */}
+       <section className="relative z-10 flex min-h-[72vh] items-center px-6 py-28 md:px-12">
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-gradient-to-b from-transparent via-[#010103]/36 to-[#010103]/82"
+        />
 
-              <Reveal className="mt-16 flex flex-col items-start justify-between gap-8 sm:flex-row sm:items-end">
-                <div><span className={`font-mono text-[8px] font-bold uppercase tracking-[0.28em] ${theme.quiet}`}>Tem um projeto em mente?</span><p className="mt-3 text-2xl font-black uppercase leading-none tracking-[-0.03em] sm:text-3xl">Vamos construir o próximo passo.</p></div>
-                <button type="button" onClick={onNavigateBudget} className={`group inline-flex cursor-pointer items-center gap-4 border-b pb-3 text-[10px] font-black uppercase tracking-[0.2em] transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-500 ${isDark ? 'border-white/30 text-white hover:border-sky-400 hover:text-sky-300' : 'border-slate-900/30 text-slate-950 hover:border-sky-500 hover:text-sky-600'}`}><span>Pedir orçamento</span><ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-2" /></button>
-              </Reveal>
+        <div className="relative z-10 mx-auto w-full max-w-7xl border-t border-white/10 pt-20">
+          <motion.div
+            initial={{
+              opacity: 0,
+              y:
+                shouldReduceMotion
+                  ? 0
+                  : 24,
+            }}
+            whileInView={{
+              opacity: 1,
+              y: 0,
+            }}
+            viewport={{
+              once: false,
+              amount: 0.25,
+            }}
+            transition={{
+              duration: 0.7,
+              ease:
+                transitionEase,
+            }}
+            className="grid gap-10 lg:grid-cols-[1fr_auto] lg:items-end"
+          >
+            <div className="relative isolate">
+              <div
+                aria-hidden="true"
+                className="absolute -inset-x-8 -inset-y-6 -z-10 rounded-[2rem] bg-[#010103]/94 blur-xl"
+              />
+
+              <span className="font-mono text-[8px] font-bold uppercase tracking-[0.28em] text-sky-400">
+                Próximo passo
+              </span>
+
+              <h2
+                className="mt-6 max-w-4xl text-[clamp(2.8rem,6vw,6rem)] font-black uppercase leading-[0.86] tracking-[-0.052em]"
+                style={{
+                  textShadow:
+                    '0 12px 38px rgba(0,0,0,0.55)',
+                }}
+              >
+                Vamos construir
+                <br />
+                o ecossistema.
+              </h2>
             </div>
-          </section>
-        );
-      })}
 
-      <WebsiteFooter onNavigateSection={(index) => {
-        if (index === 1) {
-          onNavigateServicesHub();
-          window.scrollTo({ top: 0, left: 0, behavior: shouldReduceMotion ? 'auto' : 'smooth' });
-          return;
-        }
-        if (index === 4) {
-          onNavigateBudget();
-          return;
-        }
-        onNavigateHomeSection(index);
-      }} />
+            <button
+              type="button"
+              onClick={
+                onNavigateBudget
+              }
+              className="group inline-flex cursor-pointer items-center gap-4 border-b border-white/25 pb-3 text-[10px] font-black uppercase tracking-[0.2em] transition-colors hover:border-sky-400 hover:text-sky-300"
+            >
+              <span>
+                Pedir orçamento
+              </span>
+
+              <ArrowRight
+                size={14}
+                className="transition-transform group-hover:translate-x-2"
+              />
+            </button>
+          </motion.div>
+        </div>
+      </section>
+
+      <div className="relative z-20">
+        <WebsiteFooter
+          onNavigateSection={(
+            index,
+          ) => {
+            if (
+              index === 1
+            ) {
+              onNavigateServicesHub();
+
+              window.scrollTo({
+                top: 0,
+                left: 0,
+                behavior:
+                  shouldReduceMotion
+                    ? 'auto'
+                    : 'smooth',
+              });
+
+              return;
+            }
+
+            if (
+              index === 4
+            ) {
+              onNavigateBudget();
+              return;
+            }
+
+            onNavigateHomeSection(
+              index,
+            );
+          }}
+        />
+      </div>
     </main>
   );
 }
