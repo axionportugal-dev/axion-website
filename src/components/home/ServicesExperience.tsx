@@ -3,7 +3,7 @@ import { ArrowUpRight } from 'lucide-react';
 import { serviceAreas } from '../../data/services';
 
 interface ServicesExperienceProps {
-  onNavigateToService: (slug: string) => void;
+  onNavigateToService: () => void;
 }
 
 const ORBIT_RADIUS_X_PERCENT = 36;
@@ -60,8 +60,8 @@ const createSharedOrbit = (index: number) => {
 };
 
 export default function ServicesExperience({
-  onNavigateToService,
-}: ServicesExperienceProps) {
+  onNavigateToServices,
+}: ServicesExperienceProps)  {
   return (
     <div className="absolute inset-0 overflow-hidden text-white">
       {/* Scene label */}
@@ -114,10 +114,7 @@ export default function ServicesExperience({
                   type="button"
                   onClick={(event) => {
                     event.stopPropagation();
-
-                    onNavigateToService(
-                      service.slug,
-                    );
+                    onNavigateToServices();
                   }}
                   aria-label={`Explorar ${service.title}`}
                   className="group pointer-events-auto relative w-[clamp(12.5rem,16.5vw,15.5rem)] cursor-pointer rounded-[22px] border border-white/[0.15] bg-white/[0.045] p-5 text-left backdrop-blur-2xl transition-[border-color,background-color,box-shadow] duration-500 hover:border-sky-300/45 hover:bg-white/[0.075] hover:shadow-[0_18px_65px_rgba(56,189,248,0.15)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-400"
@@ -215,7 +212,7 @@ export default function ServicesExperience({
               <button
                 key={service.slug}
                 type="button"
-                onClick={() => onNavigateToService(service.slug)}
+                onClick={onNavigateToServices}
                 className="pointer-events-auto min-h-[7.25rem] rounded-[1.65rem] border border-white/10 bg-white/[0.035] p-4 text-left backdrop-blur-sm"
               >
                 <div className="pointer-events-none flex items-center justify-between">

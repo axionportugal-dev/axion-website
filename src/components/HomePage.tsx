@@ -142,7 +142,6 @@ export default function HomePage({
   isActive = true,
   onNavigateToBudget,
   onNavigateToServices,
-  onNavigateToService,
 }: HomePageProps) {
   const [step, setStep] = useState(initialStep);
 
@@ -1695,9 +1694,15 @@ export default function HomePage({
                   }}
                 >
                   <ServicesExperience
-                    onNavigateToService={
-                      onNavigateToService
-                    }
+                    onNavigateToServices={() => {
+                      onNavigateToServices();
+
+                      window.scrollTo({
+                        top: 0,
+                        left: 0,
+                        behavior: 'auto',
+                      });
+                    }}
                   />
                 </div>
               )}
