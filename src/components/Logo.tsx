@@ -29,7 +29,7 @@ export default function Logo({ className = '', glow = true, theme }: LogoProps) 
         {/* Glow effect for Dark Mode (glowing ice blue/cyan - restricted to background backlight only) */}
         {glow && isDark && (
           <motion.div
-            className="absolute inset-0 blur-3xl opacity-40 rounded-full"
+            className="pointer-events-none absolute inset-0 blur-3xl opacity-40 rounded-full"
             style={{
               background: 'radial-gradient(circle, rgba(56,189,248,0.3) 0%, rgba(14,165,233,0.05) 60%, transparent 100%)',
               width: '280px',
@@ -50,7 +50,7 @@ export default function Logo({ className = '', glow = true, theme }: LogoProps) 
         {/* Glow effect for Light Mode (soft, deep shadow backdrop) */}
         {glow && !isDark && (
           <motion.div
-            className="absolute inset-0 blur-2xl opacity-15 rounded-full"
+            className=" pointer-events-none absolute inset-0 blur-2xl opacity-15 rounded-full"
             style={{
               background: 'radial-gradient(circle, rgba(15,23,42,0.1) 0%, transparent 80%)',
               width: '220px',
