@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "dev:api": "tsx watch server/dev.ts",
-    "build": "vite build",
+    "build": "vite build && vite build --ssr src/entry-server.tsx --outDir .ssr && node scripts/prerender.mjs",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "typecheck": "tsc --noEmit",
@@ -27,7 +27,6 @@
     "tailwindcss": "^4.1.14",
     "tsx": "^4.23.13",
     "typescript": "~5.8.2",
-    "vite": "^6.2.3",
-    "vite-prerender-plugin": "^0.5.13"
+    "vite": "^6.2.3"
   }
 }
