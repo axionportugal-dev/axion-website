@@ -1,22 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Volume2, VolumeX, Settings, ArrowRight, Sun, Moon, RefreshCw, Zap } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import Logo from './Logo';
 import FloatingTriangles from './FloatingTriangles';
-import { sfx } from './SoundManager';
 
 interface WelcomeScreenProps {
   onEnter: () => void;
   theme: 'light' | 'dark';
-  setTheme: (theme: 'light' | 'dark') => void;
+  
 }
 
-export default function WelcomeScreen({ onEnter, theme, setTheme }: WelcomeScreenProps) {
+export default function WelcomeScreen({ onEnter, theme }: WelcomeScreenProps) {
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingStateText, setLoadingStateText] = useState('Carregando marca...');
   const [isLoaded, setIsLoaded] = useState(false);
-  const [soundMuted, setSoundMuted] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
   const [clickBurst, setClickBurst] = useState<{ x: number; y: number; id: number }[]>([]);
 
   // Simulation of the high-speed premium loader
@@ -54,17 +51,11 @@ export default function WelcomeScreen({ onEnter, theme, setTheme }: WelcomeScree
     return () => clearInterval(interval);
   }, []);
 
-  const handleMuteToggle = () => {
-    const isMuted = sfx.toggleMute();
-    setSoundMuted(isMuted);
-  };
 
-  const handleHoverSfx = () => {
-    sfx.playHover();
-  };
+
 
   const handleEnterClick = (e: React.MouseEvent) => {
-    sfx.playEnter();
+    
     
     // Create click splash particles at position
     const rect = e.currentTarget.getBoundingClientRect();
@@ -108,7 +99,7 @@ export default function WelcomeScreen({ onEnter, theme, setTheme }: WelcomeScree
 
       {/* Floating Top Controls Header (Frosted Glass Glassmorphism) */}
       <motion.header 
-        className="absolute top-0 left-0 w-full z-30 px-6 py-4 flex items-center justify-between"
+        className="absolute top-0 left-0 w-full z-30 px-6 py-4 flex items-center"
         initial={{ y: -30, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.8, delay: 0.2 }}
@@ -124,134 +115,13 @@ export default function WelcomeScreen({ onEnter, theme, setTheme }: WelcomeScree
           </span>
         </div>
 
-        {/* Global Toolbar */}
-        <div className="flex items-center space-x-3">
-          {/* Sound Toggle Button */}
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleMuteToggle}
-            onMouseEnter={handleHoverSfx}
-            className={`p-2.5 rounded-full border transition-all cursor-pointer ${
-              theme === 'dark'
-                ? 'bg-slate-900/40 border-slate-700/50 hover:bg-slate-800/60 text-sky-400'
-                : 'bg-white/45 border-slate-300/60 hover:bg-white/85 text-slate-700 shadow-xs'
-            }`}
-            title={soundMuted ? 'Ativar Som' : 'Mudar para Silencioso'}
-          >
-            {soundMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-          </motion.button>
-
-          {/* Light / Dark Mode Toggle */}
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            onMouseEnter={handleHoverSfx}
-            className={`p-2.5 rounded-full border transition-all cursor-pointer ${
-              theme === 'dark'
-                ? 'bg-slate-900/40 border-slate-700/50 hover:bg-slate-800/60 text-amber-400'
-                : 'bg-white/45 border-slate-300/60 hover:bg-white/85 text-indigo-900 shadow-xs'
-            }`}
-            title={theme === 'dark' ? 'Mudar para Modo Claro' : 'Mudar para Modo Escuro'}
-          >
-            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-          </motion.button>
-
-          {/* Welcome Screen Playground settings */}
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setShowSettings(!showSettings)}
-            onMouseEnter={handleHoverSfx}
-            className={`p-2.5 rounded-full border transition-all cursor-pointer ${
-              showSettings 
-                ? 'bg-sky-500 border-sky-400 text-white' 
-                : theme === 'dark'
-                  ? 'bg-slate-900/40 border-slate-700/50 hover:bg-slate-800/60 text-slate-300'
-                  : 'bg-white/45 border-slate-300/60 hover:bg-white/85 text-slate-700 shadow-xs'
-            }`}
-            title="Ajustes do Welcome"
-          >
-            <Settings size={16} className={showSettings ? 'animate-spin-slow' : ''} />
-          </motion.button>
-        </div>
+        
       </motion.header>
 
       {/* Main Core View Area */}
       <div className="relative z-10 w-full max-w-4xl px-6 flex flex-col items-center">
         
-        {/* Animated Interactive Settings Panel */}
-        <AnimatePresence>
-          {showSettings && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.4, ease: 'easeInOut' }}
-              className={`w-full max-w-lg mb-8 rounded-2xl border p-5 overflow-hidden backdrop-blur-md ${
-                theme === 'dark'
-                  ? 'bg-slate-950/80 border-slate-800 text-slate-300'
-                  : 'bg-white/70 border-slate-200 text-slate-700 shadow-lg'
-              }`}
-            >
-              <h3 className="text-sm font-bold tracking-wider uppercase flex items-center mb-4">
-                <Settings size={14} className="mr-2 text-sky-500" />
-                Painel do Welcome Screen (Ajustes Visuais)
-              </h3>
-              
-              <div className="space-y-4">
-                {/* Visual Theme display and test */}
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold">Esquema de Cores Ativo:</span>
-                  <div className="flex space-x-2">
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${theme === 'dark' ? 'bg-slate-800 text-sky-300' : 'bg-slate-200 text-slate-700'}`}>
-                      {theme === 'dark' ? 'Dark Mode (Wallpaper.jpg)' : 'Light Mode (Cartão.jpg)'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Progress bar demonstration */}
-                <div>
-                  <div className="flex justify-between text-xs mb-1.5 font-semibold">
-                    <span className="flex items-center"><RefreshCw size={12} className="mr-1 animate-spin" /> Simular Recarregamento:</span>
-                    <button 
-                      onClick={() => {
-                        setLoadingProgress(0);
-                        setIsLoaded(false);
-                        let progress = 0;
-                        const interval = setInterval(() => {
-                          progress += 10;
-                          setLoadingProgress(progress);
-                          if (progress >= 100) {
-                            clearInterval(interval);
-                            setTimeout(() => setIsLoaded(true), 300);
-                          }
-                        }, 80);
-                      }}
-                      className="text-sky-500 hover:underline hover:text-sky-400 font-bold"
-                    >
-                      Reiniciar Loader
-                    </button>
-                  </div>
-                </div>
-
-                {/* Developer interactive tips */}
-                <div className={`p-3 rounded-xl text-xs flex items-start space-x-2 ${
-                  theme === 'dark' ? 'bg-slate-900/60' : 'bg-slate-100/80'
-                }`}>
-                  <Zap size={14} className="text-amber-500 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-semibold mb-0.5 text-slate-800 dark:text-slate-200">Experiência Imersiva:</p>
-                    <p className="opacity-80 leading-relaxed">
-                      Este portal utiliza um sintetizador de áudio via <strong>Web Audio API</strong>. Passe o mouse sobre os botões para testar os efeitos de som de alta resposta, e clique para ouvir o acorde de boas-vindas da Axion!
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        
 
         <AnimatePresence mode="wait">
           {!isLoaded ? (
@@ -325,7 +195,6 @@ export default function WelcomeScreen({ onEnter, theme, setTheme }: WelcomeScree
                     letterSpacing: '0.3em',
                   }}
                   whileTap={{ scale: 0.98 }}
-                  onMouseEnter={handleHoverSfx}
                   onClick={handleEnterClick}
                   className={`relative px-12 py-4 rounded-full font-bold tracking-[0.22em] text-[11px] uppercase transition-all duration-500 flex items-center justify-center space-x-2.5 cursor-pointer select-none overflow-hidden border ${
                     theme === 'dark'

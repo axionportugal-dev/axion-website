@@ -399,6 +399,7 @@ export default function PortfolioExperience({
                     <video
                       src={project.backgroundUrl}
                       autoPlay={!isOuter}
+                      preload="auto"
                       loop
                       muted
                       playsInline

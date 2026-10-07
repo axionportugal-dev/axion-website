@@ -25,26 +25,16 @@ import ServicesParticleStage from './services/ServicesParticleStage';
 
 import {
   serviceAreas,
-  serviceBySlug,
 } from '../data/services';
-
-import {
-  servicesHubSeo,
-  servicesSeo,
-} from '../seo/seoConfig';
 
 
 
 interface ServicesPageProps {
-  activeSlug?: string;
   onNavigateHome: () => void;
   onNavigateHomeSection: (
     index: number,
   ) => void;
   onNavigateBudget: () => void;
-  onNavigateService: (
-    slug: string,
-  ) => void;
   onNavigateServicesHub: () => void;
 }
 
@@ -52,30 +42,15 @@ const transitionEase =
   [0.16, 1, 0.3, 1] as const;
 
 export default function ServicesPage({
-  activeSlug,
   onNavigateHome,
   onNavigateHomeSection,
   onNavigateBudget,
-  onNavigateService,
   onNavigateServicesHub,
 }: ServicesPageProps) {
   const shouldReduceMotion =
     useReducedMotion();
 
-  const activeService =
-    serviceBySlug(activeSlug);
-
-  const activeServiceSeo =
-    activeService
-      ? servicesSeo[activeService.slug]
-      : undefined;
-
   
-
-  const heroDescription =
-    activeServiceSeo
-      ? activeServiceSeo.description
-      : servicesHubSeo.description;
 
   const heroRef =
     useRef<HTMLElement | null>(
@@ -90,9 +65,7 @@ export default function ServicesPage({
       >
     >({});
 
-  const didInitialScroll =
-    useRef(false);
-
+  
   
 
   /*
@@ -109,19 +82,8 @@ export default function ServicesPage({
    * This ref is deliberately not React state: it is updated on every
    * animation frame while scrolling, without rerendering the whole page.
    */
-  const initialParticleScrollPosition =
-    activeService
-      ? Math.max(
-          0,
-          serviceAreas.findIndex(
-            (service) =>
-              service.slug === activeService.slug,
-          ) + 1,
-        )
-      : 0;
-
   const particleScrollPositionRef =
-    useRef(initialParticleScrollPosition);
+    useRef(0);
 
   const { scrollYProgress } =
     useScroll();
@@ -138,90 +100,48 @@ export default function ServicesPage({
 
   
 
-  /*
-   * Direct navigation:
-   *
-   * /servicos/<slug>
-   *
-   * still scrolls to the exact service.
-   */
   useEffect(() => {
-    if (!activeService) return;
+  if (
+    typeof window === 'undefined' ||
+    !window.location.hash
+  ) {
+    return;
+  }
 
-    /*
-    * Internal navigation from the service index
-    * has already performed the scroll synchronously.
-    *
-    * Updating the pathname changes activeSlug, which
-    * triggers this effect again. In that case we must
-    * NOT perform a second scroll.
-    */
-    
+  const slug =
+    decodeURIComponent(
+      window.location.hash.slice(1),
+    );
 
-    let firstFrame = 0;
-    let secondFrame = 0;
+  let firstFrame = 0;
+  let secondFrame = 0;
 
-    const scrollToActiveService = (
-      behavior: ScrollBehavior,
-    ) => {
-      const target =
-        serviceRefs.current[
-          activeService.slug
-        ];
+  firstFrame =
+    window.requestAnimationFrame(() => {
+      secondFrame =
+        window.requestAnimationFrame(() => {
+          const target =
+            serviceRefs.current[slug];
 
-      if (!target) return;
+          if (!target) return;
 
-      const headerOffset = 76;
+          target.scrollIntoView({
+            block: 'start',
+            behavior: 'auto',
+          });
+        });
+    });
 
-      const targetTop =
-        target.getBoundingClientRect()
-          .top +
-        window.scrollY -
-        headerOffset;
+  return () => {
+    window.cancelAnimationFrame(
+      firstFrame,
+    );
 
-      window.scrollTo({
-        top: Math.max(
-          0,
-          targetTop,
-        ),
-        left: 0,
-        behavior,
-      });
-
-      didInitialScroll.current = true;
-    };
-
-    firstFrame =
-      window.requestAnimationFrame(
-        () => {
-          secondFrame =
-            window.requestAnimationFrame(
-              () => {
-                /*
-                * This path is only for opening a
-                * /servicos/<slug> route directly,
-                * browser history navigation, etc.
-                */
-                scrollToActiveService(
-                  'auto',
-                );
-              },
-            );
-        },
-      );
-
-    return () => {
-      window.cancelAnimationFrame(
-        firstFrame,
-      );
-
-      window.cancelAnimationFrame(
-        secondFrame,
-      );
-    };
-  }, [
-    activeService?.slug,
-  ]);
+    window.cancelAnimationFrame(
+      secondFrame,
+    );
+  };
+}, []);
   /*
    * Scroll-synchronised particle morphing.
    *
@@ -428,21 +348,16 @@ export default function ServicesPage({
           onClick={
             onNavigateHome
           }
-          className="pointer-events-auto group flex cursor-pointer items-center gap-3 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-400"
+          className="pointer-events-auto flex h-10 w-10 cursor-pointer items-center justify-center focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-400 md:h-11 md:w-11"
           aria-label="Ir para o início do website AXION"
         >
           <Logo
             theme="dark"
             glow={false}
-            className="h-5 w-5"
+            variant="symbol"
+            className="h-10 w-10 md:h-11 md:w-11"
           />
-
-          <span className="text-[10px] font-black uppercase tracking-[0.32em]">
-            AXION
-          </span>
         </button>
-
-        
       </header>
 
       {/* HERO */}
@@ -530,18 +445,14 @@ export default function ServicesPage({
             }}
             className="mt-6 max-w-xl text-sm font-semibold leading-[1.7] text-white/92 sm:mt-7 sm:text-base md:text-lg"
           >
-            {activeServiceSeo ? (
-              heroDescription
-            ) : (
-              <>
-                Marketing,
-                tecnologia e
-                inteligência
-                artificial ligados
-                numa única
-                estrutura digital.
-              </>
-            )}
+          <>
+            Marketing,
+            tecnologia e
+            inteligência
+            artificial ligados
+            numa única
+            estrutura digital.
+          </>
           </motion.p>
 
           {/* Service index */}
@@ -554,9 +465,7 @@ export default function ServicesPage({
                 <a
                   key={service.slug}
                   href={`#${service.slug}`}
-                  onMouseDown={(event) => {
-                    event.preventDefault();
-                  }}
+                  
                   className="group flex min-w-0 cursor-pointer items-center justify-between gap-4 border-b border-white/12 py-4 text-left transition-colors hover:border-white/35 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-400"
                 >
                   <span className="flex min-w-0 items-center gap-3">
@@ -699,20 +608,21 @@ export default function ServicesPage({
                   </div>
 
                   {/* Full existing content remains accessible */}
-                  <details className="group mt-10 max-w-xl border-y border-white/10">
-                    <summary className="flex cursor-pointer list-none items-center justify-between py-5">
-                      <span className="text-[9px] font-black uppercase tracking-[0.18em] text-white/65 transition-colors group-open:text-white">
-                        Explorar em
-                        detalhe
+                  <details className="group mt-10 max-w-xl overflow-hidden rounded-xl border border-white/15 bg-white/[0.04] transition-colors duration-300 hover:border-sky-400/40">
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4.5 transition-colors duration-300 hover:bg-sky-400/[0.07] focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-sky-400 [&::-webkit-details-marker]:hidden">
+                      <span className="text-[10px] font-black uppercase tracking-[0.17em] text-white/90 transition-colors duration-300 group-open:text-sky-300">
+                        Explorar em detalhe
                       </span>
 
-                      <ChevronDown
-                        size={13}
-                        className="text-sky-400 transition-transform duration-300 group-open:rotate-180"
-                      />
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-sky-400/25 bg-sky-400/[0.08] text-sky-300 transition-all duration-300 group-hover:border-sky-400/50 group-hover:bg-sky-400/[0.14]">
+                        <ChevronDown
+                          size={14}
+                          className="transition-transform duration-300 group-open:rotate-180"
+                        />
+                      </span>
                     </summary>
 
-                    <div className="space-y-10 border-t border-white/10 pb-8 pt-7">
+                    <div className="space-y-10 border-t border-white/10 px-5 pb-8 pt-7">
                       <div>
                         <span className="font-mono text-[8px] uppercase tracking-[0.24em] text-sky-400">
                           O que

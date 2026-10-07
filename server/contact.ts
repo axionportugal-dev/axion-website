@@ -10,6 +10,7 @@ interface ContactRequest {
   email: string;
   phone: string;
   context: string;
+  website: string;
 }
 
 interface ContactResponse {
@@ -43,6 +44,7 @@ const parseContactRequest = (input: unknown): ContactRequest | null => {
   const email = cleanText(input.email, 254);
   const phone = cleanText(input.phone, 50);
   const context = cleanText(input.context, 5000);
+  const website = cleanText(input.website, 500);
 
   const services = Array.isArray(input.services)
     ? input.services
@@ -78,12 +80,40 @@ const parseContactRequest = (input: unknown): ContactRequest | null => {
     email,
     phone,
     context,
+    website,
   };
+};
+
+const hasHoneypotValue = (
+  input: unknown,
+) => {
+  if (!isRecord(input)) {
+    return false;
+  }
+
+  return (
+    cleanText(
+      input.website,
+      500,
+    ).length > 0
+  );
 };
 
 export const processContactRequest = async (
   input: unknown,
 ): Promise<ContactResponse> => {
+  if ( 
+    hasHoneypotValue(
+      input,
+    )
+  ) {
+    return {
+      status: 200,
+      body: {
+        success: true,
+      },
+    };
+  }
   const request = parseContactRequest(input);
 
   if (!request) {

@@ -3,7 +3,7 @@ import { ArrowUpRight } from 'lucide-react';
 import { serviceAreas } from '../../data/services';
 
 interface ServicesExperienceProps {
-  onNavigateToService: () => void;
+  onNavigateToServices: () => void;
 }
 
 const ORBIT_RADIUS_X_PERCENT = 36;

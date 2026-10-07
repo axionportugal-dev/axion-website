@@ -8,6 +8,7 @@
     "dev:api": "tsx watch server/dev.ts",
     "build": "vite build && vite build --ssr src/entry-server.tsx --outDir .ssr && node scripts/prerender.mjs",
     "preview": "vite preview",
+    "start": "tsx server/index.ts",
     "clean": "rm -rf dist server.js",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit"
@@ -18,14 +19,14 @@
     "motion": "^12.23.24",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
-    "resend": "^6.26.0"
+    "resend": "^6.26.0",
+    "tsx": "^4.23.13"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.14",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.4",
     "tailwindcss": "^4.1.14",
-    "tsx": "^4.23.13",
     "typescript": "~5.8.2",
     "vite": "^6.2.3"
   }

@@ -20,10 +20,14 @@ const setMeta = (
     element =
       document.createElement('meta');
 
-    document.head.appendChild(element);
+    document.head.appendChild(
+      element,
+    );
   }
 
-  Object.entries(attributes).forEach(
+  Object.entries(
+    attributes,
+  ).forEach(
     ([name, value]) => {
       element!.setAttribute(
         name,
@@ -31,6 +35,14 @@ const setMeta = (
       );
     },
   );
+};
+
+const removeMeta = (
+  selector: string,
+) => {
+  document.head
+    .querySelector(selector)
+    ?.remove();
 };
 
 export default function Seo({
@@ -84,6 +96,14 @@ export default function Seo({
     );
 
     setMeta(
+      'meta[property="og:locale"]',
+      {
+        property: 'og:locale',
+        content: 'pt_PT',
+      },
+    );
+
+    setMeta(
       'meta[name="twitter:card"]',
       {
         name: 'twitter:card',
@@ -103,7 +123,8 @@ export default function Seo({
     setMeta(
       'meta[name="twitter:description"]',
       {
-        name: 'twitter:description',
+        name:
+          'twitter:description',
         content: description,
       },
     );
@@ -137,6 +158,16 @@ export default function Seo({
           property: 'og:url',
           content: canonical,
         },
+      );
+    } else {
+      document.head
+        .querySelector(
+          'link[rel="canonical"]',
+        )
+        ?.remove();
+
+      removeMeta(
+        'meta[property="og:url"]',
       );
     }
   }, [

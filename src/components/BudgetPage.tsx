@@ -6,10 +6,6 @@ import {
   ChevronLeft,
   Sparkles,
   Mail,
-  Phone,
-  Linkedin,
-  Instagram,
-  Globe,
   ChevronDown,
   User,
   Users,
@@ -19,7 +15,7 @@ import {
   Award,
   Target,
   Euro,
-  CheckCircle2
+  CheckCircle2,
 } from 'lucide-react';
 import Logo from './Logo';
 import FloatingTriangles from './FloatingTriangles';
@@ -102,6 +98,7 @@ export default function BudgetPage({ onBackToHome }: BudgetPageProps) {
   const hasPlayedInitialQuestionRef = useRef(false);
 
   // Form States
+
   const [quizOwner, setQuizOwner] = useState<string>('');
   const [quizSize, setQuizSize] = useState<string>('PME em Escala');
   const [quizObjective, setQuizObjective] = useState<string>('');
@@ -114,6 +111,7 @@ export default function BudgetPage({ onBackToHome }: BudgetPageProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [website,setWebsite] = useState('');
 
   const loadingMessages = [
     'Analisando identidade visual...',
@@ -194,11 +192,39 @@ export default function BudgetPage({ onBackToHome }: BudgetPageProps) {
           email: clientEmail,
           phone: clientPhone,
           context: clientMessage,
+          website,
         }),
       });
 
-      if (!response.ok) {
-        throw new Error('Não foi possível enviar o pedido.');
+      const contentType =
+        response.headers.get(
+          'content-type',
+        ) ?? '';
+
+      if (
+        !contentType.includes(
+          'application/json',
+        )
+      ) {
+        throw new Error(
+          'Resposta inválida do servidor.',
+        );
+      }
+
+      const result =
+        (await response.json()) as {
+          success?: boolean;
+          error?: string;
+        };
+
+      if (
+        !response.ok ||
+        result.success !== true
+      ) {
+        throw new Error(
+          result.error ??
+            'Não foi possível enviar o pedido.',
+        );
       }
 
       setIsSubmitted(true);
@@ -222,6 +248,7 @@ export default function BudgetPage({ onBackToHome }: BudgetPageProps) {
     setClientEmail('');
     setClientPhone('');
     setClientMessage('');
+    setWebsite('');
     setSubmitError('');
     setIsSubmitting(false);
     setIsSubmitted(false);
@@ -871,7 +898,7 @@ export default function BudgetPage({ onBackToHome }: BudgetPageProps) {
                             Registo de Contacto Executivo
                           </motion.h4>
                           <motion.p {...stagedEntrance(0.08)} className="text-[9px] text-slate-400 font-mono uppercase tracking-widest font-bold">
-                            Garantimos confidencialidade total e proteção estrita dos seus dados.
+                            Os seus dados serão utilizados exclusivamente para analisar e responder ao seu pedido.
                           </motion.p>
                         </div>
 
@@ -929,6 +956,32 @@ export default function BudgetPage({ onBackToHome }: BudgetPageProps) {
                               Opcional. Não precisa de ter tudo definido — aprofundaremos consigo os detalhes numa reunião.
                             </p>
                           </motion.div>
+                          <div
+                            aria-hidden="true"
+                            className="absolute -left-[9999px] top-auto h-px w-px overflow-hidden"
+                          >
+                            <label
+                              htmlFor="website"
+                            >
+                              Website
+                            </label>
+
+                            <input
+                              id="website"
+                              name="website"
+                              type="text"
+                              value={website}
+                              onChange={(
+                                event,
+                              ) =>
+                                setWebsite(
+                                  event.target.value,
+                                )
+                              }
+                              tabIndex={-1}
+                              autoComplete="off"
+                            />
+                          </div>
                         </div>
 
                         {/* Navigation controls */}
@@ -1087,6 +1140,19 @@ export default function BudgetPage({ onBackToHome }: BudgetPageProps) {
                               </div>
                             </motion.div>
 
+                            <p className="mx-auto max-w-md text-center text-[9px] leading-relaxed text-slate-500">
+                              Ao enviar este pedido, os dados fornecidos serão
+                              tratados pela AXION para analisar e responder ao
+                              seu contacto. Consulte a{' '}
+                              <a
+                                href="/privacidade"
+                                className="font-semibold text-sky-600 underline underline-offset-2 transition-colors hover:text-sky-700"
+                              >
+                                Política de Privacidade
+                              </a>
+                              .
+                            </p>
+
                             {submitError && (
                               <p
                                 role="alert"
@@ -1178,7 +1244,7 @@ export default function BudgetPage({ onBackToHome }: BudgetPageProps) {
           <div className="absolute left-1/2 top-0 h-48 w-[42rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-500/10 blur-[90px] pointer-events-none" />
           <div className="max-w-7xl mx-auto px-6 sm:px-8 py-10 md:py-12 space-y-9 relative">
             <div className="h-px w-full bg-gradient-to-r from-transparent via-sky-400/35 to-transparent" />
-            <div className="grid grid-cols-1 md:grid-cols-[1.4fr_1fr_auto] gap-8 md:gap-12 text-left items-start">
+            <div className="grid grid-cols-1 md:grid-cols-[1.4fr_1fr] gap-8 md:gap-12 text-left items-start">
               {/* Column 1: Logo & Description */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
@@ -1194,61 +1260,40 @@ export default function BudgetPage({ onBackToHome }: BudgetPageProps) {
                 </span>
               </div>
 
-              {/* Column 2: Contacts */}
+              {/* Column 2: Contact */}
               <div className="space-y-4">
                 <h4 className="text-[9px] font-mono tracking-[0.2em] text-sky-600 uppercase font-black">
-                  Contactos Diretos
+                  Contacto Direto
                 </h4>
-                <div className="space-y-2 text-slate-400 text-[10px] font-mono">
-                  <a href="tel:+351912345678" className="flex items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-2.5 hover:border-sky-400/35 hover:text-sky-300 transition-colors duration-300 no-underline text-slate-300 font-semibold">
-                    <Phone size={12} className="text-sky-400" />
-                    <span>+351 912 345 678</span>
-                  </a>
-                  <a href="mailto:geral@axion.pt" className="flex items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-2.5 hover:border-sky-400/35 hover:text-sky-300 transition-colors duration-300 no-underline text-slate-300 font-semibold">
-                    <Mail size={12} className="text-sky-400" />
-                    <span>geral@axion.pt</span>
-                  </a>
-                </div>
-              </div>
 
-              {/* Column 3: Social Media */}
-              <div className="space-y-4">
-                <h4 className="text-[9px] font-mono tracking-[0.2em] text-sky-600 uppercase font-black">
-                  Canais Digitais
-                </h4>
-                <div className="flex items-center gap-2.5">
-                  <a
-                    href="https://linkedin.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-2.5 rounded-full bg-white/[0.04] border border-white/10 hover:border-sky-400/50 hover:text-sky-300 hover:bg-sky-400/10 transition-all duration-300 text-slate-400"
-                  >
-                    <Linkedin size={14} />
-                  </a>
-                  <a
-                    href="https://instagram.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-2.5 rounded-full bg-white/[0.04] border border-white/10 hover:border-sky-400/50 hover:text-sky-300 hover:bg-sky-400/10 transition-all duration-300 text-slate-400"
-                  >
-                    <Instagram size={14} />
-                  </a>
-                  <a
-                    href="https://github.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-2.5 rounded-full bg-white/[0.04] border border-white/10 hover:border-sky-400/50 hover:text-sky-300 hover:bg-sky-400/10 transition-all duration-300 text-slate-400"
-                  >
-                    <Globe size={14} />
-                  </a>
-                </div>
+                <a
+                  href="mailto:axionportugal@gmail.com"
+                  className="flex items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-2.5 hover:border-sky-400/35 hover:text-sky-300 transition-colors duration-300 no-underline text-slate-300 font-semibold"
+                >
+                  <Mail size={12} className="text-sky-400" />
+                  <span>axionportugal@gmail.com</span>
+                </a>
               </div>
             </div>
 
             {/* Copyright row */}
             <div className="pt-6 border-t border-white/[0.07] flex flex-col sm:flex-row justify-between items-center gap-4 text-[8px] font-mono text-slate-600 uppercase tracking-[0.2em] w-full text-center sm:text-left font-bold">
-              <span>© 2026 AXION • TODOS OS DIREITOS RESERVADOS</span>
-              <span>TECNOLOGIA DE PRESTÍGIO</span>
+              <span>
+                © 2026 AXION • TODOS OS DIREITOS RESERVADOS
+              </span>
+
+              <div className="flex items-center gap-4">
+                <a
+                  href="/privacidade"
+                  className="transition-colors hover:text-sky-400"
+                >
+                  Política de Privacidade
+                </a>
+
+                <span>
+                  TECNOLOGIA DE PRESTÍGIO
+                </span>
+              </div>
             </div>
           </div>
         </footer>

@@ -5,18 +5,39 @@ interface LogoProps {
   className?: string;
   glow?: boolean;
   theme: 'light' | 'dark';
+  variant?: 'default' | 'symbol';
 }
 
-export default function Logo({ className = '', glow = true, theme }: LogoProps) {
+export default function Logo({
+  className = '',
+  glow = true,
+  theme,
+  variant = 'default',
+}: LogoProps) {
   const isDark = theme === 'dark';
-  
+  const isSymbol = variant === 'symbol';
+
   // Track independent image loading states for light and dark logo PNG assets
   const [logoError, setLogoError] = useState(false);
   const [logoWhiteError, setLogoWhiteError] = useState(false);
 
-  const hasError = isDark ? logoWhiteError : logoError;
-  const logoSrc = isDark ? "/assets/logowhite.png" : "/assets/logo.png";
-  const setError = isDark ? setLogoWhiteError : setLogoError;
+  const hasError = isSymbol
+    ? logoError
+    : isDark
+      ? logoWhiteError
+      : logoError;
+
+  const logoSrc = isSymbol
+    ? '/assets/logo.png'
+    : isDark
+      ? '/assets/logowhite.png'
+      : '/assets/logo.png';
+
+  const setError = isSymbol
+    ? setLogoError
+    : isDark
+      ? setLogoWhiteError
+      : setLogoError;
 
   // If className has no width or height utilities, apply the default hero size
   const hasSize = /\b(w|h)-\d+/.test(className) || /\b(w|h)-auto/.test(className) || /\b(w|h)-full/.test(className);
@@ -72,7 +93,9 @@ export default function Logo({ className = '', glow = true, theme }: LogoProps) 
           <motion.img
             src={logoSrc}
             alt="Axion Logo"
-            className="w-full h-full object-contain relative z-10 filter drop-shadow-lg select-none pointer-events-none"
+            className={`w-full h-full object-contain relative z-10 filter drop-shadow-lg select-none pointer-events-none ${
+              isSymbol && isDark ? 'brightness-0 invert' : ''
+            }`}
             onError={() => setError(true)}
             referrerPolicy="no-referrer"
             initial={{ opacity: 0, scale: 0.94 }}
