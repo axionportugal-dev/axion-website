@@ -1376,21 +1376,21 @@ export default function HomePage({
             : 'border-b border-transparent bg-transparent'
         }`}
       >
-        {/* Left Side: Brand Logo & Text */}
+        {/* Left Side: AXION brand symbol */}
         <button
           type="button"
-          className="pointer-events-auto inline-flex items-center space-x-3 cursor-pointer focus:outline-none"
+          className="pointer-events-auto inline-flex h-10 w-10 cursor-pointer items-center justify-center focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-400 md:h-11 md:w-11"
           onClick={() => {
             navigateDirectlyToStep(0);
           }}
           aria-label="Voltar ao início"
         >
-          <Logo theme={isVisualDark ? "dark" : "light"} glow={isVisualDark} className="w-5 h-5" />
-          <span className={`text-xs font-black tracking-[0.3em] uppercase ${
-            isVisualDark ? 'text-white' : 'text-slate-900'
-          }`}>
-            AXION
-          </span>
+          <Logo
+            theme={isVisualDark ? "dark" : "light"}
+            glow={false}
+            variant="symbol"
+            className="h-10 w-10 md:h-11 md:w-11"
+          />
         </button>
 
         {/* Center Side: Index-Style Navigation Links */}

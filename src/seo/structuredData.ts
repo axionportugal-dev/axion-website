@@ -3,76 +3,80 @@ import {
   servicesSeo,
 } from './seoConfig';
 
+const SITE_URL =
+  'https://www.axion-enterprise.com';
+
+const ORGANIZATION_ID =
+  `${SITE_URL}/#organization`;
+
 export const organizationStructuredData = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
+
+  '@id': ORGANIZATION_ID,
+
   name: 'AXION',
+
+  url: `${SITE_URL}/`,
+
+  logo: {
+    '@type': 'ImageObject',
+    url: `${SITE_URL}/assets/logo.png`,
+  },
+
   description:
     'A AXION desenvolve websites, plataformas, sistemas internos, automações, marketing digital e soluções de inteligência artificial adaptadas às necessidades reais das empresas.',
 };
 
 export const servicesPageStructuredData = {
   '@context': 'https://schema.org',
+
   '@type': 'ItemList',
+
+  '@id':
+    `${SITE_URL}/servicos#services`,
+
+  url:
+    `${SITE_URL}/servicos`,
+
   name: 'Serviços AXION',
+
   description:
     servicesHubSeo.description,
 
-  itemListElement: Object.entries(
-    servicesSeo,
-  ).map(
-    ([slug, service], index) => ({
-      '@type': 'ListItem',
-      position: index + 1,
+  itemListElement:
+    Object.entries(
+      servicesSeo,
+    ).map(
+      (
+        [slug, service],
+        index,
+      ) => ({
+        '@type': 'ListItem',
 
-      item: {
-        '@type': 'Service',
-        name: service.title.replace(
-          ' | AXION',
-          '',
-        ),
+        position:
+          index + 1,
 
-        description:
-          service.description,
+        item: {
+          '@type': 'Service',
 
-        identifier: slug,
+          name:
+            service.title.replace(
+              ' | AXION',
+              '',
+            ),
 
-        provider: {
-          '@type': 'Organization',
-          name: 'AXION',
+          description:
+            service.description,
+
+          identifier:
+            slug,
+
+          provider: {
+            '@id':
+              ORGANIZATION_ID,
+          },
         },
-      },
-    }),
-  ),
-};
-
-export const getServiceStructuredData = (
-  slug: string,
-) => {
-  const service =
-    servicesSeo[slug];
-
-  if (!service) {
-    return null;
-  }
-
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'Service',
-
-    name: service.title.replace(
-      ' | AXION',
-      '',
+      }),
     ),
-
-    description:
-      service.description,
-
-    identifier: slug,
-
-    provider: {
-      '@type': 'Organization',
-      name: 'AXION',
-    },
-  };
 };

@@ -71,3 +71,10 @@ export const servicesSeo: Record<
       'Integramos agentes de IA, assistentes inteligentes, automações e soluções de inteligência artificial nos processos reais das empresas.',
   },
 };
+export const privacySeo = {
+  title:
+    'Política de Privacidade | AXION',
+
+  description:
+    'Consulte a Política de Privacidade da AXION e saiba como são tratados os dados pessoais fornecidos através do website.',
+};

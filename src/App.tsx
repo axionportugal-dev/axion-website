@@ -1,26 +1,32 @@
-import React, { lazy, Suspense, useState, useEffect } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
+import React, {
+  useEffect,
+  useState,
+} from 'react';
+
+import {
+  AnimatePresence,
+  motion,
+} from 'motion/react';
+
 import WelcomeScreen from './components/WelcomeScreen';
 import HomePage from './components/HomePage';
 import BudgetPage from './components/BudgetPage';
 import ServicesPage from './components/ServicesPage';
 import Seo from './components/Seo';
-
 import StructuredData from './components/StructuredData';
+import NotFoundPage from './components/NotFoundPage';
+import PrivacyPage from './components/PrivacyPage';
 
 import {
   organizationStructuredData,
   servicesPageStructuredData,
-  getServiceStructuredData,
 } from './seo/structuredData';
 
 import {
   homeSeo,
+  privacySeo,
   servicesHubSeo,
-  servicesSeo,
 } from './seo/seoConfig';
-
-const AdminPage = lazy(() => import('./components/AdminPage'));
 
 interface AppProps {
   initialPathname?: string;
@@ -28,180 +34,304 @@ interface AppProps {
 
 export default function App({
   initialPathname,
-}: AppProps)  {
-  // Brand defaults to 'light' mode as requested, fully synchronized with 'dark' mode.
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [pathname, setPathname] = useState(
+}: AppProps) {
+  const [theme, setTheme] =
+    useState<'light' | 'dark'>(
+      'light',
+    );
+
+  const [
+    pathname,
+    setPathname,
+  ] = useState(
     () =>
       initialPathname ??
       (
-        typeof window !== 'undefined'
-          ? window.location.pathname
+        typeof window !==
+        'undefined'
+          ? window.location
+              .pathname
           : '/'
       ),
   );
-  const [homeStep, setHomeStep] = useState(0);
-  
-  // Navigation screen states: 'welcome' | 'entered' | 'budget'
-  const [currentScreen, setCurrentScreen] = useState<'welcome' | 'entered' | 'budget'>('welcome');
 
-  // Sync background attributes on change
+  const [
+    homeStep,
+    setHomeStep,
+  ] = useState(0);
+
+  const [
+    currentScreen,
+    setCurrentScreen,
+  ] = useState<
+    'welcome' |
+    'entered' |
+    'budget'
+  >('welcome');
+
+  /*
+   * Synchronize theme with
+   * the document root.
+   */
   useEffect(() => {
-    const root = window.document.documentElement;
+    const root =
+      window.document
+        .documentElement;
+
     if (theme === 'dark') {
-      root.classList.add('dark');
+      root.classList.add(
+        'dark',
+      );
     } else {
-      root.classList.remove('dark');
+      root.classList.remove(
+        'dark',
+      );
     }
   }, [theme]);
 
+  /*
+   * Browser back / forward.
+   */
   useEffect(() => {
-    const handlePopState = () => {
-      setPathname(window.location.pathname);
-      if (window.location.pathname === '/') {
-        setCurrentScreen('entered');
-      }
-    };
+    const handlePopState =
+      () => {
+        setPathname(
+          window.location
+            .pathname,
+        );
 
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+        if (
+          window.location
+            .pathname === '/'
+        ) {
+          setCurrentScreen(
+            'entered',
+          );
+        }
+      };
+
+    window.addEventListener(
+      'popstate',
+      handlePopState,
+    );
+
+    return () => {
+      window.removeEventListener(
+        'popstate',
+        handlePopState,
+      );
+    };
   }, []);
 
-  const navigateToPath = (nextPath: string) => {
-    if (window.location.pathname !== nextPath) {
-      window.history.pushState({}, '', nextPath);
+  const navigateToPath = (
+    nextPath: string,
+  ) => {
+    if (
+      window.location
+        .pathname !== nextPath
+    ) {
+      window.history.pushState(
+        {},
+        '',
+        nextPath,
+      );
+
       setPathname(nextPath);
     }
 
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'auto',
+    });
   };
 
-  const handleEnterSite = () => {
-    setCurrentScreen('entered');
+  const handleEnterSite =
+    () => {
+      setCurrentScreen(
+        'entered',
+      );
+    };
+
+  const handleBackToWelcome =
+    () => {
+      setHomeStep(0);
+
+      setCurrentScreen(
+        'welcome',
+      );
+    };
+
+  const handleNavigateToBudget =
+    () => {
+      setCurrentScreen(
+        'budget',
+      );
+    };
+
+  const handleNavigateToServices =
+    () => {
+      navigateToPath(
+        '/servicos',
+      );
+    };
+
+  /*
+   * Navigate from the Home
+   * directly to one section
+   * of the single Services page.
+   *
+   * IMPORTANT:
+   * /servicos#websites
+   * is still /servicos.
+   *
+   * We do NOT create
+   * /servicos/websites.
+   */
+  const handleNavigateToService = (
+    slug: string,
+  ) => {
+    const nextUrl =
+      `/servicos#${slug}`;
+
+    window.history.pushState(
+      {},
+      '',
+      nextUrl,
+    );
+
+    setPathname(
+      '/servicos',
+    );
   };
 
-  const handleBackToWelcome = () => {
-    setHomeStep(0);
-    setCurrentScreen('welcome');
-  };
+  const handleNavigateToServicesHub =
+    () => {
+      navigateToPath(
+        '/servicos',
+      );
+    };
 
-  const handleNavigateToBudget = () => {
-    setCurrentScreen('budget');
-  };
+  const handleNavigateFromServicesToHome =
+    () => {
+      navigateToPath('/');
 
-  const handleNavigateToServices = () => {
-    navigateToPath('/servicos');
-  };
+      setHomeStep(0);
 
-  const handleNavigateToService = (slug: string) => {
-    const nextPath = `/servicos/${slug}`;
+      setCurrentScreen(
+        'entered',
+      );
+    };
 
-    if (window.location.pathname !== nextPath) {
-      window.history.pushState({}, '', nextPath);
-      setPathname(nextPath);
-    }
-  };
+  const handleNavigateFromServicesToHomeSection =
+    (
+      index: number,
+    ) => {
+      navigateToPath('/');
 
-  const handleNavigateToServicesHub = () => {
-    navigateToPath('/servicos');
-  };
+      setHomeStep(index);
 
-  const handleNavigateFromServicesToHome = () => {
-    navigateToPath('/');
-    setHomeStep(0);
-    setCurrentScreen('entered');
-  };
+      setCurrentScreen(
+        'entered',
+      );
+    };
 
-  const handleNavigateFromServicesToHomeSection = (index: number) => {
-    navigateToPath('/');
-    setHomeStep(index);
-    setCurrentScreen('entered');
-  };
+  const handleNavigateFromServicesToBudget =
+    () => {
+      navigateToPath('/');
 
-  const handleNavigateFromServicesToBudget = () => {
-    navigateToPath('/');
-    setCurrentScreen('budget');
-  };
+      setCurrentScreen(
+        'budget',
+      );
+    };
 
-  const handleBackToHome = () => {
-    setCurrentScreen('entered');
-  };
+  const handleBackToHome =
+    () => {
+      setCurrentScreen(
+        'entered',
+      );
+    };
 
-  const isAdminRoute = pathname === '/admin' || pathname.startsWith('/admin/');
-  const isServicesRoute = pathname === '/servicos' || pathname.startsWith('/servicos/');
-  const activeServiceSlug = pathname.startsWith('/servicos/') ? pathname.replace('/servicos/', '').split('/')[0] : undefined;
+  /*
+   * Normalize trailing slashes:
+   *
+   * /servicos/
+   * becomes
+   * /servicos
+   */
+  const normalizedPathname =
+    pathname !== '/'
+      ? pathname.replace(
+          /\/+$/,
+          '',
+        )
+      : '/';
 
-  const activeServiceSeo =
-  activeServiceSlug
-    ? servicesSeo[
-        activeServiceSlug
-      ]
-    : undefined;
+  /*
+   * Public routes currently:
+   *
+   * /
+   * /servicos
+   *
+   * Everything else is 404.
+   */
+  const isServicesRoute =
+    normalizedPathname ===
+    '/servicos';
+  
+  const isPrivacyRoute =
+    normalizedPathname === '/privacidade';
 
-  const activeServiceStructuredData =
-  activeServiceSlug
-    ? getServiceStructuredData(
-        activeServiceSlug,
-      )
-    : null;
 
-  if (isAdminRoute) {
+  const isKnownRoute =
+    normalizedPathname === '/' ||
+    isServicesRoute ||
+    isPrivacyRoute;
+
+  /*
+   * 404
+   */
+  if (!isKnownRoute) {
     return (
       <>
         <Seo
-          title="AXION Studio"
-          description="Área privada AXION."
-          robots="noindex, nofollow"
+          title="Página não encontrada | AXION"
+          description="A página que procura não existe ou deixou de estar disponível."
+          robots="noindex, follow"
         />
 
-        <Suspense
-          fallback={
-            <div className="min-h-screen w-full bg-slate-950 text-white flex items-center justify-center">
-              <span className="text-[9px] font-mono tracking-[0.3em] uppercase text-sky-400">
-                A preparar AXION Studio
-              </span>
-            </div>
-          }
-        >
-          <AdminPage />
-        </Suspense>
+        <NotFoundPage />
       </>
     );
   }
 
+  /*
+   * SERVICES
+   *
+   * There is only ONE
+   * Services page.
+   */
   if (isServicesRoute) {
-    const seo =
-      activeServiceSeo ??
-      servicesHubSeo;
-
     return (
       <>
         <Seo
-          title={seo.title}
+          title={
+            servicesHubSeo.title
+          }
           description={
-            seo.description
+            servicesHubSeo.description
+          }
+
+          canonical="https://www.axion-enterprise.com/servicos"
+        />
+
+        <StructuredData
+          data={
+            servicesPageStructuredData
           }
         />
 
-        {activeServiceStructuredData ? (
-          <StructuredData
-            data={
-              activeServiceStructuredData
-            }
-          />
-        ) : (
-          <StructuredData
-            data={
-              servicesPageStructuredData
-            }
-          />
-        )}
-
         <ServicesPage
-          
-          activeSlug={
-            activeServiceSlug
-          }
           onNavigateHome={
             handleNavigateFromServicesToHome
           }
@@ -211,9 +341,6 @@ export default function App({
           onNavigateBudget={
             handleNavigateFromServicesToBudget
           }
-          onNavigateService={
-            handleNavigateToService
-          }
           onNavigateServicesHub={
             handleNavigateToServicesHub
           }
@@ -222,11 +349,48 @@ export default function App({
     );
   }
 
+  if (isPrivacyRoute) {
   return (
     <>
       <Seo
-        title={homeSeo.title}
-        description={homeSeo.description}
+        title={
+          privacySeo.title
+        }
+        description={
+          privacySeo.description
+        }
+        canonical="https://www.axion-enterprise.com/privacidade"
+      />
+
+      <PrivacyPage
+        onBackToHome={() => {
+          window.history.pushState(
+            {},
+            '',
+            '/',
+          );
+
+          setPathname('/');
+        }}
+      />
+    </>
+  );
+}
+
+  /*
+   * HOME
+   */
+  return (
+    <>
+      <Seo
+        title={
+          homeSeo.title
+        }
+        description={
+          homeSeo.description
+        }
+
+        canonical="https://www.axion-enterprise.com/"
       />
 
       <StructuredData
@@ -235,16 +399,20 @@ export default function App({
         }
       />
 
-      <div
-        className="min-h-screen w-full font-sans antialiased selection:bg-sky-500/30 selection:text-sky-900 transition-all duration-700"
-      >
-        {currentScreen !== 'budget' && (
+      <div className="min-h-screen w-full font-sans antialiased selection:bg-sky-500/30 selection:text-sky-900 transition-all duration-700">
+        {currentScreen !==
+          'budget' && (
           <HomePage
-            initialStep={homeStep}
-            isActive={
-              currentScreen === 'entered'
+            initialStep={
+              homeStep
             }
-            onBack={handleBackToWelcome}
+            isActive={
+              currentScreen ===
+              'entered'
+            }
+            onBack={
+              handleBackToWelcome
+            }
             onNavigateToBudget={
               handleNavigateToBudget
             }
@@ -258,30 +426,54 @@ export default function App({
         )}
 
         <AnimatePresence mode="wait">
-          {currentScreen === 'welcome' && (
+          {currentScreen ===
+            'welcome' && (
             <motion.div
               key="welcome-screen-wrapper"
-              initial={{ opacity: 1 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
+              initial={{
+                opacity: 1,
+              }}
+              animate={{
+                opacity: 1,
+              }}
+              exit={{
+                opacity: 0,
+              }}
+              transition={{
+                duration: 0.5,
+              }}
               className="fixed inset-0 z-[100] w-full"
             >
               <WelcomeScreen
-                theme={theme}
-                setTheme={setTheme}
-                onEnter={handleEnterSite}
+                theme={
+                  theme
+                }
+                setTheme={
+                  setTheme
+                }
+                onEnter={
+                  handleEnterSite
+                }
               />
             </motion.div>
           )}
 
-          {currentScreen === 'budget' && (
+          {currentScreen ===
+            'budget' && (
             <motion.div
               key="budget-page-wrapper"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
+              initial={{
+                opacity: 0,
+              }}
+              animate={{
+                opacity: 1,
+              }}
+              exit={{
+                opacity: 0,
+              }}
+              transition={{
+                duration: 0.5,
+              }}
               className="w-full"
             >
               <BudgetPage
@@ -295,4 +487,4 @@ export default function App({
       </div>
     </>
   );
-  }
+}

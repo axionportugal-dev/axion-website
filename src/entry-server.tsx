@@ -5,16 +5,15 @@ import App from './App';
 
 import {
   homeSeo,
+  privacySeo,
   servicesHubSeo,
-  servicesSeo,
 } from './seo/seoConfig';
 
 export const prerenderRoutes = [
   '/',
   '/servicos',
-  ...Object.keys(servicesSeo).map(
-    (slug) => `/servicos/${slug}`,
-  ),
+  '/privacidade',
+
 ];
 
 export function getSeoForPath(
@@ -23,16 +22,10 @@ export function getSeoForPath(
   if (pathname === '/servicos') {
     return servicesHubSeo;
   }
-
-  if (pathname.startsWith('/servicos/')) {
-    const slug = pathname
-      .replace('/servicos/', '')
-      .split('/')[0];
-
-    return (
-      servicesSeo[slug] ??
-      servicesHubSeo
-    );
+  if (
+    pathname === '/privacidade'
+  ) {
+    return privacySeo;
   }
 
   return homeSeo;
