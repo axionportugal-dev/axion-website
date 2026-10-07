@@ -448,9 +448,7 @@ export default function App({
                 theme={
                   theme
                 }
-                setTheme={
-                  setTheme
-                }
+                
                 onEnter={
                   handleEnterSite
                 }
