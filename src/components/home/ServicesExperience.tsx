@@ -1,4 +1,9 @@
-import { motion } from 'motion/react';
+import { useEffect, useRef } from 'react';
+import {
+  motion,
+  useAnimationFrame,
+  useReducedMotion,
+} from 'motion/react';
 import { ArrowUpRight } from 'lucide-react';
 import { serviceAreas } from '../../data/services';
 
@@ -6,62 +11,171 @@ interface ServicesExperienceProps {
   onNavigateToServices: () => void;
 }
 
-const ORBIT_RADIUS_X_PERCENT = 36;
-const ORBIT_RADIUS_Y_PERCENT = 23;
-const ORBIT_DURATION = 40;
-const ORBIT_POINTS = 72;
+/*
+ * The cards travel on a tilted ellipse that represents a circular orbit
+ * seen from slightly above. sin(angle) is the depth axis: cards at the
+ * bottom of the ellipse are closest to the viewer, cards at the top are
+ * furthest away and recede behind the sphere.
+ */
+const ORBIT_RADIUS_X = 0.37; // fraction of stage width
+const ORBIT_RADIUS_Y = 0.27; // fraction of stage height
+const ORBIT_TILT_RAD = (-8 * Math.PI) / 180;
+const ORBIT_PERIOD_SECONDS = 56;
 
-const createSharedOrbit = (index: number) => {
-  const phaseOffset =
-    (index / serviceAreas.length) *
-    Math.PI *
-    2;
+const DEPTH_SCALE_MIN = 0.58;
+const DEPTH_OPACITY_MIN = 0.6;
+const DEPTH_MAX_TILT_DEG = 16;
 
-  const left = Array.from(
-    { length: ORBIT_POINTS + 1 },
-    (_, point) => {
-      const progress =
-        point / ORBIT_POINTS;
-
-      const angle =
-        progress * Math.PI * 2 +
-        phaseOffset;
-
-      return `${
-        50 +
-        Math.cos(angle) *
-          ORBIT_RADIUS_X_PERCENT
-      }%`;
-    },
-  );
-
-  const top = Array.from(
-    { length: ORBIT_POINTS + 1 },
-    (_, point) => {
-      const progress =
-        point / ORBIT_POINTS;
-
-      const angle =
-        progress * Math.PI * 2 +
-        phaseOffset;
-
-      return `${
-        50 +
-        Math.sin(angle) *
-          ORBIT_RADIUS_Y_PERCENT
-      }%`;
-    },
-  );
-
-  return {
-    left,
-    top,
-  };
-};
+const HOVER_DIM_FACTOR = 0.45;
+const SPEED_EASE_MS = 450;
 
 export default function ServicesExperience({
   onNavigateToServices,
 }: ServicesExperienceProps)  {
+  const stageRef =
+    useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<
+    (HTMLDivElement | null)[]
+  >([]);
+  const stageSizeRef = useRef({
+    width: 0,
+    height: 0,
+  });
+  const angleRef = useRef(0);
+  const speedRef = useRef(1);
+  const hoveredIndexRef =
+    useRef<number | null>(null);
+  const prefersReducedMotion =
+    useReducedMotion();
+
+  useEffect(() => {
+    const stage = stageRef.current;
+
+    if (!stage) return;
+
+    const measure = () => {
+      stageSizeRef.current = {
+        width: stage.clientWidth,
+        height: stage.clientHeight,
+      };
+    };
+
+    measure();
+
+    const resizeObserver =
+      new ResizeObserver(measure);
+    resizeObserver.observe(stage);
+
+    return () =>
+      resizeObserver.disconnect();
+  }, []);
+
+  useAnimationFrame((_, delta) => {
+    const { width, height } =
+      stageSizeRef.current;
+
+    if (!width || !height) return;
+
+    const hoveredIndex =
+      hoveredIndexRef.current;
+
+    // Ease to a stop while a card is hovered, then ease back up.
+    const targetSpeed =
+      prefersReducedMotion ||
+      hoveredIndex !== null
+        ? 0
+        : 1;
+
+    speedRef.current +=
+      (targetSpeed - speedRef.current) *
+      Math.min(1, delta / SPEED_EASE_MS);
+
+    angleRef.current +=
+      (delta / 1000) *
+      ((Math.PI * 2) /
+        ORBIT_PERIOD_SECONDS) *
+      speedRef.current;
+
+    const radiusX = width * ORBIT_RADIUS_X;
+    const radiusY = height * ORBIT_RADIUS_Y;
+    const tiltCos = Math.cos(ORBIT_TILT_RAD);
+    const tiltSin = Math.sin(ORBIT_TILT_RAD);
+
+    cardRefs.current.forEach(
+      (card, index) => {
+        if (!card) return;
+
+        const angle =
+          angleRef.current +
+          (index / serviceAreas.length) *
+            Math.PI *
+            2;
+
+        const orbitX =
+          Math.cos(angle) * radiusX;
+        const orbitY =
+          Math.sin(angle) * radiusY;
+
+        const x =
+          orbitX * tiltCos -
+          orbitY * tiltSin;
+        const y =
+          orbitX * tiltSin +
+          orbitY * tiltCos;
+
+        // 0 = far side of the orbit, 1 = closest to the viewer.
+        const depth =
+          (Math.sin(angle) + 1) / 2;
+
+        const isHovered =
+          hoveredIndex === index;
+
+        const scale =
+          DEPTH_SCALE_MIN +
+          (1 - DEPTH_SCALE_MIN) * depth;
+
+        let opacity =
+          DEPTH_OPACITY_MIN +
+          (1 - DEPTH_OPACITY_MIN) *
+            depth;
+
+        if (isHovered) {
+          opacity = 1;
+        } else if (hoveredIndex !== null) {
+          opacity *= HOVER_DIM_FACTOR;
+        }
+
+        // Cards turn slightly towards the sphere as they pass the sides.
+        const rotateY =
+          -Math.cos(angle) *
+          DEPTH_MAX_TILT_DEG;
+
+        card.style.transform = `translate3d(${x.toFixed(
+          1,
+        )}px, ${y.toFixed(
+          1,
+        )}px, 0) translate(-50%, -50%) perspective(1100px) rotateY(${rotateY.toFixed(
+          2,
+        )}deg) scale(${(
+          isHovered
+            ? Math.max(scale, 0.96)
+            : scale
+        ).toFixed(3)})`;
+        card.style.opacity =
+          opacity.toFixed(3);
+        card.style.zIndex = isHovered
+          ? '200'
+          : String(
+              Math.round(depth * 100),
+            );
+        card.style.setProperty(
+          '--orbit-depth',
+          depth.toFixed(3),
+        );
+      },
+    );
+  });
+
   return (
     <div className="absolute inset-0 overflow-hidden text-white">
       {/* Scene label */}
@@ -71,43 +185,55 @@ export default function ServicesExperience({
         </span>
       </div>
 
-      {/* Desktop shared elliptical orbit */}
-      <div className="absolute inset-0 hidden lg:block">
+      {/* Desktop 3D orbit around the particle sphere */}
+      <div
+        ref={stageRef}
+        className="absolute inset-0 hidden lg:block"
+      >
+        {/* Orbit trail: brighter on the near side, fading into the distance */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute left-1/2 top-1/2 rounded-[50%] border border-sky-200/[0.09] [mask-image:linear-gradient(to_bottom,rgba(0,0,0,0.15),black_75%)]"
+          style={{
+            width: `${ORBIT_RADIUS_X * 200}%`,
+            height: `${ORBIT_RADIUS_Y * 200}%`,
+            transform: `translate(-50%, -50%) rotate(${ORBIT_TILT_RAD}rad)`,
+          }}
+        />
+
         {serviceAreas.map(
           (service, index) => {
             const Icon = service.icon;
-            const orbit =
-              createSharedOrbit(index);
 
             return (
-              <motion.div
+              <div
                 key={service.slug}
-                className="absolute z-10"
-                style={{
-                  transform:
-                    'translate(-50%, -50%)',
+                ref={(element) => {
+                  cardRefs.current[index] =
+                    element;
                 }}
-                initial={{
-                  left: orbit.left[0],
-                  top: orbit.top[0],
+                className="absolute left-1/2 top-1/2 will-change-[transform,opacity]"
+                style={{ opacity: 0 }}
+                onPointerEnter={() => {
+                  hoveredIndexRef.current =
+                    index;
                 }}
-                animate={{
-                  left: orbit.left,
-                  top: orbit.top,
+                onPointerLeave={() => {
+                  if (
+                    hoveredIndexRef.current ===
+                    index
+                  ) {
+                    hoveredIndexRef.current =
+                      null;
+                  }
                 }}
-                transition={{
-                  left: {
-                    duration:
-                      ORBIT_DURATION,
-                    repeat: Infinity,
-                    ease: 'linear',
-                  },
-                  top: {
-                    duration:
-                      ORBIT_DURATION,
-                    repeat: Infinity,
-                    ease: 'linear',
-                  },
+                onFocus={() => {
+                  hoveredIndexRef.current =
+                    index;
+                }}
+                onBlur={() => {
+                  hoveredIndexRef.current =
+                    null;
                 }}
               >
                 <motion.button
@@ -117,7 +243,7 @@ export default function ServicesExperience({
                     onNavigateToServices();
                   }}
                   aria-label={`Explorar ${service.title}`}
-                  className="group pointer-events-auto relative w-[clamp(12.5rem,16.5vw,15.5rem)] cursor-pointer rounded-[22px] border border-white/[0.15] bg-white/[0.045] p-5 text-left backdrop-blur-2xl transition-[border-color,background-color,box-shadow] duration-500 hover:border-sky-300/45 hover:bg-white/[0.075] hover:shadow-[0_18px_65px_rgba(56,189,248,0.15)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-400"
+                  className="group pointer-events-auto relative w-[clamp(12rem,14.5vw,14rem)] cursor-pointer rounded-[22px] border border-white/[0.13] bg-[#0b1018]/70 p-5 text-left shadow-[0_24px_70px_rgba(56,189,248,calc(var(--orbit-depth,0)*0.1)),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-2xl transition-[border-color,background-color] duration-500 hover:border-sky-300/45 hover:bg-[#0d1520]/80 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-400"
                   initial={{
                     opacity: 0,
                     scale: 0.92,
@@ -180,17 +306,17 @@ export default function ServicesExperience({
                   </div>
 
                   <div className="pointer-events-none mt-7 flex items-center justify-between border-t border-white/[0.09] pt-4">
-                    <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-white/35 transition-colors duration-300 group-hover:text-white/65">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-sky-400 transition-colors duration-300 group-hover:text-sky-300">
                       Explorar
                     </span>
 
                     <ArrowUpRight
-                      size={12}
+                      size={15}
                       className="text-sky-400 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
                     />
                   </div>
                 </motion.button>
-              </motion.div>
+              </div>
             );
           },
         )}
