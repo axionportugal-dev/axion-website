@@ -1,1 +1,162 @@
 @import "tailwindcss";
+
+/*
+ * Starfield twinkle (SpaceBackdrop).
+ *
+ * Pure opacity/transform keyframes so the browser runs them on the
+ * compositor instead of animating ~190 elements from JavaScript.
+ */
+@keyframes axion-star-twinkle {
+  0% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+
+  100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+}
+
+@keyframes axion-star-twinkle-bright {
+  0% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.22);
+  }
+
+  100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+}
+
+@keyframes axion-backdrop-breathe {
+  0%,
+  100% {
+    opacity: 0.18;
+    transform: translate(-50%, -50%) scale(0.94);
+  }
+
+  50% {
+    opacity: 0.3;
+    transform: translate(-50%, -50%) scale(1.06);
+  }
+}
+
+.axion-star {
+  animation: axion-star-twinkle ease-in-out infinite alternate;
+}
+
+.axion-star-bright {
+  animation-name: axion-star-twinkle-bright;
+}
+
+.axion-backdrop-glow {
+  animation: axion-backdrop-breathe 12s ease-in-out infinite;
+}
+
+/* ScrollCue: pulse travelling down a hairline. */
+@keyframes axion-scroll-cue {
+  0% {
+    transform: translateY(-100%);
+  }
+
+  100% {
+    transform: translateY(200%);
+  }
+}
+
+.axion-scroll-cue-pulse {
+  animation: axion-scroll-cue 1.7s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .axion-star,
+  .axion-backdrop-glow,
+  .axion-scroll-cue-pulse {
+    animation: none;
+  }
+}
+
+/*
+ * Large screens (wider than 1440px).
+ *
+ * The UI is designed at 1440px with fixed micro-typography (7-15px).
+ * Above that width those sizes grow with the viewport (up to 1.5x at
+ * ~2160px+) so the site does not look tiny on 2K/4K displays. Below
+ * 1440px nothing changes.
+ *
+ * These rules are unlayered, so they override Tailwind's utilities layer;
+ * sm:/md: variants come after the base sizes so they still win.
+ */
+@media (min-width: 1441px) {
+  .text-\[6px\] {
+    font-size: clamp(6px, 0.4167vw, 9.0px);
+  }
+
+  .text-\[7px\] {
+    font-size: clamp(7px, 0.4861vw, 10.5px);
+  }
+
+  .text-\[8px\] {
+    font-size: clamp(8px, 0.5556vw, 12.0px);
+  }
+
+  .text-\[9px\] {
+    font-size: clamp(9px, 0.625vw, 13.5px);
+  }
+
+  .text-\[10px\] {
+    font-size: clamp(10px, 0.6944vw, 15.0px);
+  }
+
+  .text-\[11px\] {
+    font-size: clamp(11px, 0.7639vw, 16.5px);
+  }
+
+  .text-\[12px\] {
+    font-size: clamp(12px, 0.8333vw, 18.0px);
+  }
+
+  .text-\[13px\] {
+    font-size: clamp(13px, 0.9028vw, 19.5px);
+  }
+
+  .sm\:text-\[8px\] {
+    font-size: clamp(8px, 0.5556vw, 12.0px);
+  }
+
+  .sm\:text-\[10px\] {
+    font-size: clamp(10px, 0.6944vw, 15.0px);
+  }
+
+  .sm\:text-\[11px\] {
+    font-size: clamp(11px, 0.7639vw, 16.5px);
+  }
+
+  .md\:text-\[9px\] {
+    font-size: clamp(9px, 0.625vw, 13.5px);
+  }
+
+  .md\:text-\[10px\] {
+    font-size: clamp(10px, 0.6944vw, 15.0px);
+  }
+
+  .md\:text-\[13px\] {
+    font-size: clamp(13px, 0.9028vw, 19.5px);
+  }
+
+  .md\:text-\[15px\] {
+    font-size: clamp(15px, 1.0417vw, 22.5px);
+  }
+}

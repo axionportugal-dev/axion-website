@@ -3,6 +3,10 @@ import {
   useRef,
   type RefObject,
 } from 'react';
+import {
+  COMPACT_LAYOUT_MAX_WIDTH,
+  COMPACT_SPHERE_CENTER_Y,
+} from './compactLayout';
 
 interface AxionParticleFieldProps {
   morphProgress: number;
@@ -55,6 +59,7 @@ const SAMPLE_HEIGHT = 360;
 const TILE_SIZE = 8;
 
 const EXTRA_CLOUD_PARTICLE_COUNT = 2800;
+const POINT_SPRITE_SIZE = 32;
 
 const TAU = Math.PI * 2;
 const GOLDEN_ANGLE =
@@ -594,6 +599,46 @@ export default function AxionParticleField({
     let height = 0;
     let pixelRatio = 1;
 
+    /*
+     * Pre-rendered anti-aliased white disc.
+     *
+     * Stamping this sprite with globalAlpha is far cheaper than building
+     * an arc path and parsing a new rgba() string for every point.
+     */
+    const pointSprite =
+      document.createElement('canvas');
+
+    pointSprite.width =
+      POINT_SPRITE_SIZE;
+    pointSprite.height =
+      POINT_SPRITE_SIZE;
+
+    const spriteContext =
+      pointSprite.getContext('2d');
+
+    if (spriteContext) {
+      spriteContext.fillStyle =
+        '#ffffff';
+      spriteContext.beginPath();
+      spriteContext.arc(
+        POINT_SPRITE_SIZE / 2,
+        POINT_SPRITE_SIZE / 2,
+        POINT_SPRITE_SIZE / 2 - 1,
+        0,
+        TAU,
+      );
+      spriteContext.fill();
+    }
+
+    /*
+     * Adaptive quality: on devices that cannot hold the frame budget,
+     * draw only every 2nd / 3rd extra dust particle.
+     */
+    let lastTimestamp = 0;
+    let frameTimeAverage = 16.7;
+    let extraParticleStride = 1;
+    let qualityCooldown = 0;
+
     const resize = () => {
       const rect =
         canvas.getBoundingClientRect();
@@ -641,6 +686,33 @@ export default function AxionParticleField({
     const draw = (
       timestamp: number,
     ) => {
+      if (lastTimestamp) {
+        const delta = Math.min(
+          timestamp - lastTimestamp,
+          100,
+        );
+
+        frameTimeAverage +=
+          (delta - frameTimeAverage) *
+          0.05;
+
+        qualityCooldown = Math.max(
+          0,
+          qualityCooldown - delta,
+        );
+
+        if (
+          qualityCooldown === 0 &&
+          frameTimeAverage > 24 &&
+          extraParticleStride < 3
+        ) {
+          extraParticleStride += 1;
+          qualityCooldown = 2000;
+        }
+      }
+
+      lastTimestamp = timestamp;
+
       context.clearRect(
         0,
         0,
@@ -696,6 +768,16 @@ export default function AxionParticleField({
 
       const globalOpacity =
         opacityRef.current;
+
+      // Nothing visible: keep the loop alive but skip all per-point work.
+      if (globalOpacity <= 0.001) {
+        frame =
+          window.requestAnimationFrame(
+            draw,
+          );
+
+        return;
+      }
 
       const {
         drawWidth,
@@ -775,11 +857,20 @@ export default function AxionParticleField({
           height,
         );
 
+      /*
+       * Phones / portrait tablets: a smaller sphere so the services ring can
+       * orbit around it (see ServicesOrbitMobile in ServicesExperience).
+       */
+      const isCompactLayout =
+        width < COMPACT_LAYOUT_MAX_WIDTH;
+
       const sphereCenterX =
         width / 2;
 
       const sphereCenterY =
-        height / 2;
+        isCompactLayout
+          ? height * COMPACT_SPHERE_CENTER_Y
+          : height / 2;
 
       const cloudCenterX =
         width / 2;
@@ -791,7 +882,12 @@ export default function AxionParticleField({
         height * 0.485;
 
       const sphereRadius =
-        baseDimension * 0.115;
+        isCompactLayout
+          ? Math.min(
+              baseDimension * 0.13,
+              80,
+            )
+          : baseDimension * 0.115;
 
       /*
        * Final Portfolio cloud.
@@ -869,48 +965,41 @@ export default function AxionParticleField({
           return;
         }
 
-        context.beginPath();
-
-        context.arc(
-          x,
-          y,
-          Math.max(
-            0.3,
-            size,
-          ),
-          0,
-          TAU,
+        const radius = Math.max(
+          0.3,
+          size,
         );
 
-        context.fillStyle =
-          `rgba(255,255,255,${Math.min(
-            1,
-            alpha,
-          )})`;
+        context.globalAlpha =
+          Math.min(1, alpha);
 
-        context.fill();
+        context.drawImage(
+          pointSprite,
+          x - radius,
+          y - radius,
+          radius * 2,
+          radius * 2,
+        );
 
         if (glow) {
-          context.beginPath();
-
-          context.arc(
-            x,
-            y,
-            Math.max(
-              0.8,
-              size * 2.7,
-            ),
-            0,
-            TAU,
+          const glowRadius = Math.max(
+            0.8,
+            size * 2.7,
           );
 
-          context.fillStyle =
-            `rgba(255,255,255,${Math.min(
+          context.globalAlpha =
+            Math.min(
               0.12,
               alpha * 0.09,
-            )})`;
+            );
 
-          context.fill();
+          context.drawImage(
+            pointSprite,
+            x - glowRadius,
+            y - glowRadius,
+            glowRadius * 2,
+            glowRadius * 2,
+          );
         }
       };
 
@@ -1298,6 +1387,14 @@ export default function AxionParticleField({
             particle,
             index,
           ) => {
+            if (
+              index %
+                extraParticleStride !==
+              0
+            ) {
+              return;
+            }
+
             /*
             * Starting position on the sphere.
             */
@@ -1466,6 +1563,8 @@ export default function AxionParticleField({
           },
         );
       }
+
+      context.globalAlpha = 1;
 
       frame =
         window.requestAnimationFrame(

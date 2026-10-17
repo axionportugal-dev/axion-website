@@ -1,5 +1,3 @@
-import { motion } from 'motion/react';
-
 const seededRandom = (seed: number) => {
   const value = Math.sin(seed * 12.9898) * 43758.5453;
   return value - Math.floor(value);
@@ -45,57 +43,42 @@ export default function SpaceBackdrop() {
         }}
       />
 
-      {/* Irregular stars */}
+      {/* Irregular stars: static base opacity on the wrapper, CSS twinkle inside */}
       <div className="pointer-events-none absolute inset-0">
         {stars.map((star) => (
-          <motion.span
+          <span
             key={star.id}
-            className="absolute rounded-full bg-white"
+            className="absolute"
             style={{
               left: star.left,
               top: star.top,
-              width: star.size,
-              height: star.size,
               opacity: star.opacity,
-              boxShadow: star.bright
-                ? `0 0 ${star.size * 5}px rgba(255,255,255,0.65)`
-                : `0 0 ${star.size * 2.5}px rgba(255,255,255,0.2)`,
             }}
-            animate={{
-              opacity: [
-                star.opacity * 0.55,
-                star.opacity,
-                star.opacity * 0.7,
-              ],
-              scale: star.bright
-                ? [1, 1.22, 1]
-                : [1, 1.06, 1],
-            }}
-            transition={{
-              duration: star.duration,
-              delay: star.delay,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
-          />
+          >
+            <span
+              className={`axion-star block rounded-full bg-white ${
+                star.bright ? 'axion-star-bright' : ''
+              }`}
+              style={{
+                width: star.size,
+                height: star.size,
+                boxShadow: star.bright
+                  ? `0 0 ${star.size * 5}px rgba(255,255,255,0.65)`
+                  : `0 0 ${star.size * 2.5}px rgba(255,255,255,0.2)`,
+                animationDuration: `${star.duration}s`,
+                animationDelay: `${star.delay}s`,
+              }}
+            />
+          </span>
         ))}
       </div>
 
       {/* Very subtle common luminosity */}
-      <motion.div
-        className="pointer-events-none absolute left-1/2 top-1/2 h-[58rem] w-[58rem] -translate-x-1/2 -translate-y-1/2 rounded-full"
+      <div
+        className="axion-backdrop-glow pointer-events-none absolute left-1/2 top-1/2 h-[58rem] w-[58rem] rounded-full"
         style={{
           background:
             'radial-gradient(circle, rgba(255,255,255,0.028) 0%, rgba(255,255,255,0.016) 24%, rgba(255,255,255,0.007) 46%, transparent 72%)',
-        }}
-        animate={{
-          scale: [0.94, 1.06, 0.94],
-          opacity: [0.18, 0.3, 0.18],
-        }}
-        transition={{
-          duration: 12,
-          repeat: Infinity,
-          ease: 'easeInOut',
         }}
       />
     </div>

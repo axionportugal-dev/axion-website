@@ -15,6 +15,49 @@ interface PortfolioProject {
   result: string;
 }
 
+/*
+ * Background video that only decodes while its card is on screen.
+ *
+ * The rail keeps cards mounted while they move, so the autoPlay attribute
+ * (only read on mount) cannot follow the card. Play/pause is driven here.
+ */
+function RailVideo({
+  src,
+  shouldPlay,
+}: {
+  src: string;
+  shouldPlay: boolean;
+}) {
+  const videoRef =
+    useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+
+    if (!video) return;
+
+    if (shouldPlay) {
+      // play() rejects when interrupted by a pause; that is expected.
+      video.play().catch(() => {});
+    } else {
+      video.pause();
+    }
+  }, [shouldPlay]);
+
+  return (
+    <video
+      ref={videoRef}
+      src={src}
+      autoPlay={shouldPlay}
+      preload={shouldPlay ? 'auto' : 'metadata'}
+      loop
+      muted
+      playsInline
+      className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+    />
+  );
+}
+
 interface PortfolioExperienceProps {
   projects: PortfolioProject[];
   activeIndex: number;
@@ -318,7 +361,7 @@ export default function PortfolioExperience({
                     left-1/2
                     top-1/2
                     aspect-[16/8.8]
-                    w-[clamp(19rem,31vw,28rem)]
+                    w-[clamp(19rem,31vw,40rem)] md:max-lg:w-[30rem]
                     overflow-hidden
                     rounded-[24px]
                     border
@@ -396,19 +439,15 @@ export default function PortfolioExperience({
                   {/* Project media */}
                   {project.backgroundType ===
                   'video' ? (
-                    <video
+                    <RailVideo
                       src={project.backgroundUrl}
-                      autoPlay={!isOuter}
-                      preload="auto"
-                      loop
-                      muted
-                      playsInline
-                      className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+                      shouldPlay={!isOuter}
                     />
                   ) : (
                     <img
                       src={project.backgroundUrl}
                       alt=""
+                      decoding="async"
                       className="pointer-events-none absolute inset-0 h-full w-full object-cover"
                     />
                   )}
@@ -454,7 +493,7 @@ export default function PortfolioExperience({
       </motion.div>
 
       {/* Active project metadata — title now lives below the posters */}
-      <div className="pointer-events-none absolute bottom-12 left-8 z-30 max-w-xl md:left-12">
+      <div className="pointer-events-none absolute left-6 right-6 top-[67%] z-30 max-w-xl md:bottom-12 md:left-12 md:right-auto md:top-auto">
         <motion.div
           key={`project-info-${activeProject.id}`}
           initial={{
@@ -499,7 +538,7 @@ export default function PortfolioExperience({
       </div>
 
       {/* Navigation */}
-      <div className="absolute bottom-14 right-8 z-40 flex items-center gap-4 md:right-12">
+      <div className="absolute bottom-16 left-1/2 z-40 flex -translate-x-1/2 items-center gap-4 md:bottom-14 md:left-auto md:right-12 md:translate-x-0">
         <button
           type="button"
           onClick={onPrev}
