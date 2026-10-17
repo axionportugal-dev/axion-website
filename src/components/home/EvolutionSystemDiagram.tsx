@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import {
   motion,
   useReducedMotion,
@@ -19,6 +20,11 @@ type NodeId =
 
 interface EvolutionSystemDiagramProps {
   stage: EvolutionStageKey;
+  /*
+   * 'portrait' rotates the layout for phones: the same structure laid out
+   * top-to-bottom in a narrow canvas, with larger labels.
+   */
+  orientation?: 'landscape' | 'portrait';
 }
 
 interface Point {
@@ -163,10 +169,32 @@ const positions: Record<
   },
 };
 
-const core: Point = {
+const coreLandscape: Point = {
   x: 380,
   y: 235,
 };
+
+const LANDSCAPE_SIZE = {
+  width: 760,
+  height: 430,
+};
+
+const PORTRAIT_SIZE = {
+  width: 430,
+  height: 620,
+};
+
+/*
+ * Landscape -> portrait: swap the axes and fit the result into the narrow
+ * canvas (landscape y 30..380 -> x 75..355, landscape x 100..640 ->
+ * y 40..580), keeping every pill inside the frame.
+ */
+const toPortrait = (
+  point: Point,
+): Point => ({
+  x: 75 + (point.y - 30) * 0.8,
+  y: 40 + (point.x - 100),
+});
 
 const connectionNodes: NodeId[] = [
   'website',
@@ -179,12 +207,50 @@ const connectionNodes: NodeId[] = [
 
 export default function EvolutionSystemDiagram({
   stage,
+  orientation = 'landscape',
 }: EvolutionSystemDiagramProps) {
   const reduceMotion =
     useReducedMotion();
 
+  const isPortrait =
+    orientation === 'portrait';
+
+  // Unique SVG ids: desktop and phone diagrams can coexist in the DOM.
+  const svgId = useId().replace(/:/g, '');
+  const gridId = `system-grid-${svgId}`;
+  const glowId = `core-glow-${svgId}`;
+
+  const size = isPortrait
+    ? PORTRAIT_SIZE
+    : LANDSCAPE_SIZE;
+
+  const project = (point: Point) =>
+    isPortrait
+      ? toPortrait(point)
+      : point;
+
   const currentPositions =
-    positions[stage];
+    Object.fromEntries(
+      Object.entries(
+        positions[stage],
+      ).map(([id, point]) => [
+        id,
+        project(point),
+      ]),
+    ) as Record<NodeId, Point>;
+
+  const core = project(coreLandscape);
+
+  // Labels are larger on phones, where the canvas is drawn smaller.
+  const nodeFontSize = isPortrait
+    ? 11
+    : 8;
+  const pillWidth = isPortrait
+    ? 140
+    : 124;
+  const pillHeight = isPortrait
+    ? 38
+    : 34;
 
   const connectionOpacity =
     stage === 'base'
@@ -206,7 +272,7 @@ export default function EvolutionSystemDiagram({
   return (
     <div className="relative h-full min-h-0 w-full overflow-hidden">
       <svg
-        viewBox="0 0 760 430"
+        viewBox={`0 0 ${size.width} ${size.height}`}
         className="absolute inset-0 h-full w-full"
         fill="none"
         aria-hidden="true"
@@ -214,7 +280,7 @@ export default function EvolutionSystemDiagram({
         {/* Technical grid */}
         <defs>
           <pattern
-            id="system-grid"
+            id={gridId}
             width="38"
             height="38"
             patternUnits="userSpaceOnUse"
@@ -227,7 +293,7 @@ export default function EvolutionSystemDiagram({
             />
           </pattern>
 
-          <radialGradient id="core-glow">
+          <radialGradient id={glowId}>
             <stop
               offset="0%"
               stopColor="#38bdf8"
@@ -242,9 +308,9 @@ export default function EvolutionSystemDiagram({
         </defs>
 
         <rect
-          width="760"
-          height="430"
-          fill="url(#system-grid)"
+          width={size.width}
+          height={size.height}
+          fill={`url(#${gridId})`}
         />
 
         {/* Main connections */}
@@ -400,7 +466,7 @@ export default function EvolutionSystemDiagram({
           cx={core.x}
           cy={core.y}
           r="115"
-          fill="url(#core-glow)"
+          fill={`url(#${glowId})`}
           initial={false}
           animate={{
             opacity:
@@ -520,11 +586,11 @@ export default function EvolutionSystemDiagram({
               }}
             >
               <rect
-                x="-62"
-                y="-17"
-                width="124"
-                height="34"
-                rx="17"
+                x={-pillWidth / 2}
+                y={-pillHeight / 2}
+                width={pillWidth}
+                height={pillHeight}
+                rx={pillHeight / 2}
                 fill={
                   isAI
                     ? '#0ea5e9'
@@ -543,7 +609,7 @@ export default function EvolutionSystemDiagram({
               />
 
               <circle
-                cx="-45"
+                cx={-pillWidth / 2 + 17}
                 cy="0"
                 r="3"
                 fill={
@@ -555,14 +621,14 @@ export default function EvolutionSystemDiagram({
 
               <text
                 x="5"
-                y="3"
+                y={nodeFontSize * 0.38}
                 textAnchor="middle"
                 fill={
                   isAI
                     ? '#ffffff'
                     : '#0f172a'
                 }
-                fontSize="8"
+                fontSize={nodeFontSize}
                 fontWeight="700"
                 letterSpacing="0.7"
               >

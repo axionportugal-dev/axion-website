@@ -911,7 +911,7 @@ export default function BudgetPage({ onBackToHome }: BudgetPageProps) {
                               value={clientName}
                               onChange={(e) => setClientName(e.target.value)}
                               placeholder="EX: CLÁUDIO MENDES / AXION CORP"
-                              className="w-full p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 focus:border-slate-900 focus:bg-white text-xs text-slate-950 uppercase tracking-wider font-bold focus:outline-none transition-all placeholder:text-slate-400 placeholder:normal-case placeholder:font-normal"
+                              className="w-full p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 focus:border-slate-900 focus:bg-white text-base sm:text-xs text-slate-950 uppercase tracking-wider font-bold focus:outline-none transition-all placeholder:text-slate-400 placeholder:normal-case placeholder:font-normal"
                             />
                           </motion.div>
 
@@ -923,7 +923,7 @@ export default function BudgetPage({ onBackToHome }: BudgetPageProps) {
                               value={clientEmail}
                               onChange={(e) => setClientEmail(e.target.value)}
                               placeholder="EX: CONTACTO@EMPRESA.PT"
-                              className="w-full p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 focus:border-slate-900 focus:bg-white text-xs text-slate-950 uppercase tracking-wider font-bold focus:outline-none transition-all placeholder:text-slate-400 placeholder:normal-case placeholder:font-normal"
+                              className="w-full p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 focus:border-slate-900 focus:bg-white text-base sm:text-xs text-slate-950 uppercase tracking-wider font-bold focus:outline-none transition-all placeholder:text-slate-400 placeholder:normal-case placeholder:font-normal"
                             />
                           </motion.div>
 
@@ -936,7 +936,7 @@ export default function BudgetPage({ onBackToHome }: BudgetPageProps) {
                               value={clientPhone}
                               onChange={(e) => setClientPhone(e.target.value)}
                               placeholder="EX: +351 912 345 678"
-                              className="w-full p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 focus:border-slate-900 focus:bg-white text-xs text-slate-950 uppercase tracking-wider font-bold focus:outline-none transition-all placeholder:text-slate-400 placeholder:normal-case placeholder:font-normal"
+                              className="w-full p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 focus:border-slate-900 focus:bg-white text-base sm:text-xs text-slate-950 uppercase tracking-wider font-bold focus:outline-none transition-all placeholder:text-slate-400 placeholder:normal-case placeholder:font-normal"
                             />
                           </motion.div>
                           <motion.div {...stagedEntrance(0.34)} className="space-y-2 text-left">
@@ -949,7 +949,7 @@ export default function BudgetPage({ onBackToHome }: BudgetPageProps) {
                               onChange={(e) => setClientMessage(e.target.value)}
                               rows={5}
                               placeholder="Explique brevemente o que pretende, o que já existe atualmente, principais necessidades, referências, prazos ou qualquer contexto que considere relevante."
-                              className="w-full resize-none p-4 rounded-xl border border-slate-200 bg-slate-50/60 focus:border-slate-900 focus:bg-white text-xs text-slate-950 leading-relaxed font-medium focus:outline-none transition-all placeholder:text-slate-400 placeholder:font-normal"
+                              className="w-full resize-none p-4 rounded-xl border border-slate-200 bg-slate-50/60 focus:border-slate-900 focus:bg-white text-base sm:text-xs text-slate-950 leading-relaxed font-medium focus:outline-none transition-all placeholder:text-slate-400 placeholder:font-normal"
                             />
 
                             <p className="text-[8px] font-mono text-slate-400 leading-relaxed">
