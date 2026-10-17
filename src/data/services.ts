@@ -196,5 +196,3 @@ export const serviceAreas: ServiceArea[] = [
     ecosystem: 'A IA ganha valor quando está ligada aos pontos certos: website, formulários, CRM, campanhas e processos internos. A AXION integra essa camada sem a separar da operação real.',
   },
 ];
-
-export const serviceBySlug = (slug?: string) => serviceAreas.find((service) => service.slug === slug);
