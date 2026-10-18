@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, animate, type AnimationPlaybackControls } from 'motion/react';
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -45,6 +45,11 @@ interface HomePageProps {
    * the wordmark (and the lines under it) appear once it has landed.
    */
   heroLogoVisible?: boolean;
+  /*
+   * True until the opening intro has fully finished (wordmark, tagline and
+   * scroll hint): section navigation waits so animations never overlap.
+   */
+  interactionLocked?: boolean;
 }
 
 
@@ -149,6 +154,7 @@ export default function HomePage({
   onNavigateToBudget,
   onNavigateToServices,
   heroLogoVisible = true,
+  interactionLocked = false,
 }: HomePageProps) {
   const [step, setStep] = useState(initialStep);
 
@@ -257,6 +263,21 @@ export default function HomePage({
   // Debouncing locks to make scrolling snappy and instant
   const isAnimatingRef = useRef(false);
 
+  const interactionLockedRef = useRef(interactionLocked);
+  interactionLockedRef.current = interactionLocked;
+
+  /*
+   * Touch navigation plays the same continuous Hero -> Services ->
+   * Portfolio morph that the wheel scrubs on desktop, instead of jumping
+   * straight to the end (which skipped the particle animation on phones).
+   */
+  const progressTweenRef = useRef<AnimationPlaybackControls | null>(null);
+  const isTweeningRef = useRef(false);
+
+  // Opening a services card: the sphere disperses, then the page changes.
+  const [servicesDisperse, setServicesDisperse] = useState(0);
+  const isDispersingRef = useRef(false);
+
   // Portfolio horizontal trackpad gesture state.
   // One physical swipe must move exactly one project.
   const portfolioHorizontalAccumulatorRef = useRef(0);
@@ -310,6 +331,7 @@ export default function HomePage({
 
   const nextStep = () => {
     if (activePopupIdx !== null) return;
+    if (interactionLockedRef.current) return;
     if (isMobileMenuOpen) return;
     if (isAnimatingRef.current) return;
 
@@ -428,6 +450,10 @@ export default function HomePage({
   };
 
   const navigateDirectlyToStep = (targetStep: number) => {
+    if (interactionLockedRef.current) return;
+
+    progressTweenRef.current?.stop();
+    isTweeningRef.current = false;
     setIsFooterVisible(false);
 
     if (targetStep === 0) {
@@ -449,6 +475,7 @@ export default function HomePage({
 
   const prevStep = () => {
     if (activePopupIdx !== null) return;
+    if (interactionLockedRef.current) return;
     if (isMobileMenuOpen) return;
     if (isAnimatingRef.current) return;
 
@@ -505,6 +532,134 @@ export default function HomePage({
     }
   };
 
+  const TOUCH_MORPH_SECONDS = 1.35;
+  const TOUCH_MORPH_EASE = [0.45, 0, 0.2, 1] as const;
+
+  const tweenProgress = (
+    from: number,
+    to: number,
+    update: (value: number) => void,
+    onComplete: () => void,
+  ) => {
+    progressTweenRef.current?.stop();
+    isTweeningRef.current = true;
+
+    progressTweenRef.current = animate(from, to, {
+      duration: TOUCH_MORPH_SECONDS,
+      ease: TOUCH_MORPH_EASE,
+      onUpdate: update,
+      onComplete: () => {
+        isTweeningRef.current = false;
+        progressTweenRef.current = null;
+        onComplete();
+      },
+    });
+  };
+
+  // Swipe up on touch screens.
+  const touchNext = () => {
+    if (activePopupIdx !== null || isMobileMenuOpen) return;
+
+    if (step === 0) {
+      setIsFooterVisible(false);
+      tweenProgress(
+        heroServicesProgressRef.current,
+        1,
+        updateHeroServicesProgress,
+        () => {
+          updateServicesPortfolioProgress(0);
+          setStep(1);
+        },
+      );
+      return;
+    }
+
+    if (step === 1) {
+      setIsFooterVisible(false);
+      tweenProgress(
+        servicesPortfolioProgressRef.current,
+        1,
+        updateServicesPortfolioProgress,
+        () => setStep(2),
+      );
+      return;
+    }
+
+    nextStep();
+  };
+
+  // Swipe down on touch screens.
+  const touchPrev = () => {
+    if (activePopupIdx !== null || isMobileMenuOpen) return;
+
+    if (step === 1) {
+      setIsFooterVisible(false);
+      setStep(0);
+      tweenProgress(
+        heroServicesProgressRef.current,
+        0,
+        updateHeroServicesProgress,
+        () => {},
+      );
+      return;
+    }
+
+    if (step === 2) {
+      setIsFooterVisible(false);
+      tweenProgress(
+        servicesPortfolioProgressRef.current,
+        0,
+        updateServicesPortfolioProgress,
+        () => {
+          updateHeroServicesProgress(1);
+          setStep(1);
+        },
+      );
+      return;
+    }
+
+    prevStep();
+  };
+
+  useEffect(
+    () => () => progressTweenRef.current?.stop(),
+    [],
+  );
+
+  const openServicesWithDisperse = () => {
+    if (isDispersingRef.current) return;
+
+    const goToServices = () => {
+      onNavigateToServices();
+
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: 'auto',
+      });
+    };
+
+    if (
+      window.matchMedia(
+        '(prefers-reduced-motion: reduce)',
+      ).matches
+    ) {
+      goToServices();
+      return;
+    }
+
+    isDispersingRef.current = true;
+    isTweeningRef.current = true;
+
+    animate(0, 1, {
+      duration: 0.85,
+      // Starts gently, then the burst accelerates away.
+      ease: [0.5, 0, 0.75, 0.2],
+      onUpdate: setServicesDisperse,
+      onComplete: goToServices,
+    });
+  };
+
   const lockAnimation = () => {
     isAnimatingRef.current = true;
     setTimeout(() => {
@@ -531,6 +686,8 @@ export default function HomePage({
     }
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault(); // prevent standard browser viewport scroll jump
+
+      if (interactionLockedRef.current || isTweeningRef.current) return;
 
 
       /*
@@ -1106,6 +1263,8 @@ export default function HomePage({
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (interactionLockedRef.current || isTweeningRef.current) return;
+
       if (e.key === 'ArrowRight' && step === 2) {
         e.preventDefault();
         nextProject();
@@ -1152,10 +1311,12 @@ export default function HomePage({
         }
       } else {
         if (Math.abs(deltaY) > 25) {
+          if (interactionLockedRef.current || isTweeningRef.current) return;
+
           if (deltaY > 0) {
-            nextStep();
+            touchNext();
           } else {
-            prevStep();
+            touchPrev();
           }
         }
       }
@@ -1571,6 +1732,9 @@ export default function HomePage({
                   ? particleCanvasTakeover
                   : 1
               }
+              disperseProgress={
+                servicesDisperse
+              }
             />
           </div>
         )}
@@ -1779,8 +1943,13 @@ export default function HomePage({
                 <div
                   className="absolute inset-0"
                   style={{
+                    // Cards fade fast while the sphere disperses.
                     opacity:
-                      servicesContentOpacity,
+                      servicesContentOpacity *
+                      Math.max(
+                        0,
+                        1 - servicesDisperse * 2.2,
+                      ),
 
                     transform:
                       `scale(${servicesContentScale})`,
@@ -1790,15 +1959,9 @@ export default function HomePage({
                   }}
                 >
                   <ServicesExperience
-                    onNavigateToServices={() => {
-                      onNavigateToServices();
-
-                      window.scrollTo({
-                        top: 0,
-                        left: 0,
-                        behavior: 'auto',
-                      });
-                    }}
+                    onNavigateToServices={
+                      openServicesWithDisperse
+                    }
                   />
                 </div>
               )}

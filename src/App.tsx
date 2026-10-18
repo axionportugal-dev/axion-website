@@ -573,6 +573,9 @@ export default function App({
             heroLogoVisible={
               isHeroLogoVisible
             }
+            interactionLocked={
+              isIntroOverlayVisible
+            }
           />
           </Suspense></PageLoadBoundary>
         )}

@@ -32,6 +32,8 @@ interface Particle {
 const PARTICLE_COUNT = 2400;
 const TAU = Math.PI * 2;
 const POINT_SPRITE_SIZE = 32;
+const ENTRANCE_MS = 1400;
+const ENTRANCE_SPREAD = 2.4;
 
 export const SERVICES_PARTICLE_SHAPES: readonly ServicesParticleShape[] = [
   'cloud',
@@ -660,6 +662,13 @@ export default function ServicesParticleStage({
      * level 1 drops most halos, level 2 also draws every 2nd particle.
      */
     let lastTimestamp = 0;
+
+    /*
+     * Entrance: the particles arrive scattered past the screen edges and
+     * contract into the first shape - the reverse of the home sphere's
+     * dispersal when a services card is opened.
+     */
+    let entranceStart = 0;
     let frameTimeAverage = 16.7;
     let qualityLevel = 0;
     let qualityCooldown = 0;
@@ -670,9 +679,10 @@ export default function ServicesParticleStage({
       width = rect.width;
       height = rect.height;
 
+      // Phones: 1.5x backing store is plenty for tiny points.
       dpr = Math.min(
         window.devicePixelRatio || 1,
-        2,
+        width < 1024 ? 1.5 : 2,
       );
 
       canvas.width = Math.round(width * dpr);
@@ -842,11 +852,37 @@ export default function ServicesParticleStage({
         morphProgress,
       );
 
-      const fromProjection =
-        getProjection(fromShape);
+      if (!entranceStart) entranceStart = timestamp;
 
-      const toProjection =
+      const entranceLinear = reduceMotion
+        ? 1
+        : Math.min(
+            1,
+            (timestamp - entranceStart) /
+              ENTRANCE_MS,
+          );
+      // easeOutCubic: fast arrival, gentle settle.
+      const entrance =
+        1 - (1 - entranceLinear) ** 3;
+      const entranceSpread =
+        1 + (1 - entrance) * ENTRANCE_SPREAD;
+
+      const fromProjectionBase =
+        getProjection(fromShape);
+      const toProjectionBase =
         getProjection(toShape);
+
+      const fromProjection = {
+        ...fromProjectionBase,
+        scaleX: fromProjectionBase.scaleX * entranceSpread,
+        scaleY: fromProjectionBase.scaleY * entranceSpread,
+      };
+
+      const toProjection = {
+        ...toProjectionBase,
+        scaleX: toProjectionBase.scaleX * entranceSpread,
+        scaleY: toProjectionBase.scaleY * entranceSpread,
+      };
 
       // Per-frame constants (identical for every particle).
       const ambientX = lerp(
@@ -873,8 +909,15 @@ export default function ServicesParticleStage({
         cloudWeight,
       );
 
+      // Phones draw every 3rd particle from the start (the shapes are small
+      // there, so they stay dense enough); slow devices drop to every 2nd
+      // through qualityLevel.
       const particleStride =
-        qualityLevel >= 2 ? 2 : 1;
+        width < 640
+          ? 3
+          : qualityLevel >= 2
+            ? 2
+            : 1;
 
       /*
        * On phones the shapes are drawn much smaller, so the same particles
@@ -882,7 +925,7 @@ export default function ServicesParticleStage({
        * Dim and shrink them to keep the shape readable.
        */
       const isPhone = width < 640;
-      const phoneAlpha = isPhone ? 0.55 : 1;
+      const phoneAlpha = isPhone ? 0.9 : 1;
       const phoneSize = isPhone ? 0.8 : 1;
 
       context.globalCompositeOperation = 'lighter';
@@ -963,7 +1006,8 @@ export default function ServicesParticleStage({
             particle.brightness *
             alphaFactor *
             phoneAlpha *
-            twinkle;
+            twinkle *
+            entrance;
 
           const radius = Math.max(0.35, size);
 

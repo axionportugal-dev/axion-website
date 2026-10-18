@@ -13,6 +13,11 @@ interface AxionParticleFieldProps {
   servicesPortfolioProgress?: number;
   opacity?: number;
   sourceElementRef?: RefObject<HTMLElement | null>;
+  /*
+   * 0 -> 1 when a services card is opened: the sphere bursts outwards and
+   * fades before the services page takes over.
+   */
+  disperseProgress?: number;
 }
 
 interface Fragment {
@@ -60,6 +65,7 @@ const TILE_SIZE = 8;
 
 const EXTRA_CLOUD_PARTICLE_COUNT = 2800;
 const POINT_SPRITE_SIZE = 32;
+const DISPERSE_RADIUS_GAIN = 6;
 
 const TAU = Math.PI * 2;
 const GOLDEN_ANGLE =
@@ -151,6 +157,7 @@ export default function AxionParticleField({
   servicesPortfolioProgress = 0,
   opacity = 1,
   sourceElementRef,
+  disperseProgress = 0,
 }: AxionParticleFieldProps) {
   const canvasRef =
     useRef<HTMLCanvasElement | null>(
@@ -178,6 +185,10 @@ export default function AxionParticleField({
 
   const opacityRef =
     useRef(opacity);
+
+  const disperseRef =
+    useRef(disperseProgress);
+  disperseRef.current = disperseProgress;
 
   const sourceMetricsRef = useRef({
     drawWidth: SAMPLE_WIDTH,
@@ -646,10 +657,17 @@ export default function AxionParticleField({
       width = rect.width;
       height = rect.height;
 
+      // Phones: tiny points don't need a 2x backing store; 1.5x halves
+      // the fill work with no visible difference.
       pixelRatio = Math.min(
         window.devicePixelRatio ||
           1,
-        2,
+        width < COMPACT_LAYOUT_MAX_WIDTH ? 1.5 : 2,
+      );
+
+      extraParticleStride = Math.max(
+        extraParticleStride,
+        width < 768 ? 2 : 1,
       );
 
       canvas.width =
@@ -766,8 +784,12 @@ export default function AxionParticleField({
           ),
         );
 
+      const disperse = disperseRef.current;
+
+      // Bursting points fade out as they fly away.
       const globalOpacity =
-        opacityRef.current;
+        opacityRef.current *
+        (1 - disperse) ** 1.4;
 
       // Nothing visible: keep the loop alive but skip all per-point work.
       if (globalOpacity <= 0.001) {
@@ -882,12 +904,14 @@ export default function AxionParticleField({
         height * 0.485;
 
       const sphereRadius =
-        isCompactLayout
+        (isCompactLayout
           ? Math.min(
               baseDimension * 0.13,
               80,
             )
-          : baseDimension * 0.115;
+          : baseDimension * 0.115) *
+        // Disperse: the sphere expands outwards past the screen edges.
+        (1 + disperse * DISPERSE_RADIUS_GAIN);
 
       /*
        * Final Portfolio cloud.

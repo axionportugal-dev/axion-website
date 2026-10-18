@@ -48,7 +48,10 @@ export default function SpaceBackdrop() {
         {stars.map((star) => (
           <span
             key={star.id}
-            className="absolute"
+            // Phones: half the twinkling stars (fewer composited layers).
+            className={`absolute ${
+              star.id % 2 === 1 && !star.bright ? 'max-sm:hidden' : ''
+            }`}
             style={{
               left: star.left,
               top: star.top,

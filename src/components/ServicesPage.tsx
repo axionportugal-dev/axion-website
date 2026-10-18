@@ -587,11 +587,24 @@ export default function ServicesPage({
             className="mt-10 grid w-full max-w-5xl grid-cols-1 gap-x-6 self-center sm:mt-12 sm:grid-cols-2 sm:gap-x-8 lg:mt-14 lg:grid-cols-3 lg:gap-x-10"
           >
             {serviceAreas.map(
-              (service) => (
-                <a
+              (service, index) => (
+                <motion.a
                   key={service.slug}
                   href={`#${service.slug}`}
-                  
+                  // Topics arrive one by one after the title, as the
+                  // particles settle into the cloud.
+                  initial={{
+                    opacity: 0,
+                    y: shouldReduceMotion ? 0 : 12,
+                  }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.55,
+                    delay: shouldReduceMotion
+                      ? 0
+                      : 0.45 + index * 0.07,
+                    ease: transitionEase,
+                  }}
                   className="group flex min-w-0 cursor-pointer items-center justify-between gap-4 border-b border-white/12 py-4 text-left transition-colors hover:border-white/35 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-400"
                 >
                   <span className="flex min-w-0 items-center gap-3">
@@ -608,7 +621,7 @@ export default function ServicesPage({
                     size={11}
                     className="shrink-0 text-white/30 transition-all duration-300 group-hover:translate-y-1 group-hover:text-sky-400"
                   />
-                </a>
+                </motion.a>
               ),
             )}
           </nav>

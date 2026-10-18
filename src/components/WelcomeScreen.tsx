@@ -54,6 +54,8 @@ const HOLD_MS = 650;
 const MORPH_SECONDS = 1.35;
 const MORPH_EASE = [0.65, 0, 0.35, 1] as const;
 const LAND_FADE_SECONDS = 0.6;
+// Hero tagline (delay 0.25 + 0.55s) and scroll hint (0.5 + 0.5s) after landing.
+const HAND_OVER_AFTER_LAND_MS = 1100;
 
 const LOADING_TEXTS = [
   'Analisando identidade visual...',
@@ -260,9 +262,11 @@ export default function WelcomeScreen({
     if (phase === 'land') {
       onLand();
 
+      // Hand over only once the hero's tagline and scroll hint have
+      // finished appearing, so a scroll can never overlap them.
       const timer = window.setTimeout(
         onDone,
-        (LAND_FADE_SECONDS + 0.3) * 1000,
+        HAND_OVER_AFTER_LAND_MS,
       );
 
       return () => window.clearTimeout(timer);
