@@ -543,7 +543,7 @@ export default function PortfolioExperience({
           type="button"
           onClick={onPrev}
           aria-label="Projeto anterior"
-          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-white/[0.035] text-white/60 backdrop-blur-md transition-all duration-300 hover:border-white/30 hover:bg-white/[0.07] hover:text-white"
+          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-white/[0.035] text-white/60 transition-all duration-300 hover:border-white/30 hover:bg-white/[0.07] hover:text-white"
         >
           <ChevronLeft size={14} />
         </button>
@@ -572,7 +572,7 @@ export default function PortfolioExperience({
           type="button"
           onClick={onNext}
           aria-label="Projeto seguinte"
-          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-white/[0.035] text-white/60 backdrop-blur-md transition-all duration-300 hover:border-white/30 hover:bg-white/[0.07] hover:text-white"
+          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-white/[0.035] text-white/60 transition-all duration-300 hover:border-white/30 hover:bg-white/[0.07] hover:text-white"
         >
           <ChevronRight size={14} />
         </button>

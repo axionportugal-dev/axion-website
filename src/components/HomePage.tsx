@@ -25,6 +25,7 @@ import EvolutionSystemDiagram, {
 import SpaceBackdrop from './home/SpaceBackdrop';
 import { WebsiteFooterContent } from './WebsiteFooter';
 import { serviceAreas } from '../data/services';
+import { budgetCallGlow, heroGlow } from './softGlows';
 
 
 // Type-safe string paths for custom company logos uploaded to assets
@@ -1554,7 +1555,7 @@ export default function HomePage({
       <header
         className={`fixed top-0 left-0 w-full z-50 px-5 py-5 sm:px-6 md:px-8 md:py-6 flex items-center justify-between select-none pointer-events-none transition-colors duration-300 ${
           step === 3
-            ? 'border-b border-slate-900/10 bg-[#f7f7f4]/95 backdrop-blur-xl lg:border-transparent lg:bg-transparent lg:backdrop-blur-none'
+            ? 'border-b border-slate-900/10 bg-[#f7f7f4]/95 lg:border-transparent lg:bg-transparent'
             : 'border-b border-transparent bg-transparent'
         }`}
       >
@@ -1857,7 +1858,8 @@ export default function HomePage({
               />
 
               <motion.div
-                className="absolute left-1/2 top-[46%] h-[34rem] w-[34rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-300/10 blur-[130px] pointer-events-none"
+                className="absolute left-1/2 top-[46%] h-[1324px] w-[1324px] -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+                style={{ background: heroGlow }}
                 initial={{ opacity: 0, scale: 0.65 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
@@ -2110,7 +2112,8 @@ export default function HomePage({
 
                 <div
                   aria-hidden="true"
-                  className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[28rem] w-[28rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-400/[0.035] blur-[130px]"
+                  className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[1228px] w-[1228px] -translate-x-1/2 -translate-y-1/2"
+                  style={{ background: budgetCallGlow }}
                 />
               </div>
             </motion.section>
@@ -2127,7 +2130,7 @@ export default function HomePage({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: "100%" }}
               transition={{ type: 'spring', stiffness: 110, damping: 24 }}
-              className="absolute inset-x-0 bottom-0 z-40 w-full px-6 md:px-12 pointer-events-auto text-left bg-slate-950/98 backdrop-blur-2xl border-t border-white/10 shadow-[0_-30px_80px_rgba(2,6,23,0.48)]"
+              className="absolute inset-x-0 bottom-0 z-40 w-full px-6 md:px-12 pointer-events-auto text-left bg-slate-950/98 border-t border-white/10 shadow-[0_-30px_80px_rgba(2,6,23,0.48)]"
             >
               <WebsiteFooterContent
                 sectionLabels={sectionLabels}

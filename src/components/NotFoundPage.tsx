@@ -1,9 +1,13 @@
 import Logo from './Logo';
+import { notFoundGlow } from './softGlows';
 
 export default function NotFoundPage() {
   return (
     <main className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-slate-950 px-6 text-white">
-      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[34rem] w-[34rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-500/10 blur-[140px]" />
+      <div
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[1384px] w-[1384px] -translate-x-1/2 -translate-y-1/2"
+        style={{ background: notFoundGlow }}
+      />
 
       <div className="relative z-10 mx-auto flex max-w-2xl flex-col items-center text-center">
         <a

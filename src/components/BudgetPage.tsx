@@ -20,6 +20,7 @@ import {
 import Logo from './Logo';
 import FloatingTriangles from './FloatingTriangles';
 import { serviceAreas } from '../data/services';
+import { budgetCornerGlow, budgetTopGlow } from './softGlows';
 
 interface BudgetPageProps {
   onBackToHome: () => void;
@@ -305,8 +306,15 @@ export default function BudgetPage({ onBackToHome }: BudgetPageProps) {
           maskImage: 'radial-gradient(circle at 50% 42%, black 15%, transparent 72%)',
         }}
       />
-      <div className="fixed left-1/2 top-[-18rem] h-[46rem] w-[46rem] -translate-x-1/2 rounded-full bg-sky-500/15 blur-[150px] pointer-events-none" />
-      <div className="fixed -left-32 bottom-10 h-80 w-80 rounded-full bg-blue-600/10 blur-[120px] pointer-events-none" />
+      {/* Same centres as the old blurred discs (see softGlows.ts). */}
+      <div
+        className="fixed left-1/2 top-[-738px] h-[1636px] w-[1636px] -translate-x-1/2 pointer-events-none"
+        style={{ background: budgetTopGlow }}
+      />
+      <div
+        className="fixed left-[-488px] bottom-[-320px] h-[1040px] w-[1040px] pointer-events-none"
+        style={{ background: budgetCornerGlow }}
+      />
 
       {pageState === 'quiz' && (
         <div className="fixed inset-0 opacity-40 pointer-events-none">
