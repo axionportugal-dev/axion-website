@@ -635,7 +635,7 @@ function ServicesOrbitMobile({
         }}
       >
         {/* Orbit trail: the ellipse itself, lying in the ring plane */}
-        <div
+        <motion.div
           aria-hidden="true"
           className="pointer-events-none absolute rounded-[50%] border border-sky-200/[0.12]"
           style={{
@@ -644,6 +644,12 @@ function ServicesOrbitMobile({
             left: -radiusX,
             top: -radiusZ,
             transform: 'rotateX(90deg)',
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{
+            duration: 0.7,
+            delay: 0.08,
           }}
         />
 
@@ -703,9 +709,35 @@ function RingCard({
       ),
   );
 
+  /*
+   * Entrance, identical to the desktop cards (fade in, scale 0.92 -> 1,
+   * blur 7px -> 0, staggered by index). Multiplied into the ring's own
+   * transform / opacity so it never fights the swipe.
+   */
+  const prefersReducedMotion =
+    useReducedMotion();
+  const entrance = useMotionValue(
+    prefersReducedMotion ? 1 : 0,
+  );
+
+  useEffect(() => {
+    if (prefersReducedMotion) return;
+
+    const controls = animate(
+      entrance,
+      1,
+      {
+        duration: 0.7,
+        delay: 0.08 + index * 0.075,
+      },
+    );
+
+    return () => controls.stop();
+  }, [entrance, index, prefersReducedMotion]);
+
   const transform = useTransform(
-    angle,
-    (value) => {
+    [angle, entrance],
+    ([value, appear]: number[]) => {
       const theta = toRadians(value);
       const x = radiusX * Math.sin(theta);
       const z = radiusZ * Math.cos(theta);
@@ -736,13 +768,15 @@ function RingCard({
         1,
       )}px, 0px, ${z.toFixed(
         1,
-      )}px) rotateX(${RING_TILT_DEG}deg) rotateY(${facing.toFixed(2)}deg)`;
+      )}px) rotateX(${RING_TILT_DEG}deg) rotateY(${facing.toFixed(
+        2,
+      )}deg) scale(${(0.92 + 0.08 * appear).toFixed(3)})`;
     },
   );
 
   const opacity = useTransform(
-    angle,
-    (value) => {
+    [angle, entrance],
+    ([value, appear]: number[]) => {
       const depth =
         (Math.cos(toRadians(value)) + 1) /
         2;
@@ -761,9 +795,18 @@ function RingCard({
         (RING_OPACITY_MIN +
           (1 - RING_OPACITY_MIN) *
             depth) *
-        backFade
+        backFade *
+        appear
       );
     },
+  );
+
+  const filter = useTransform(
+    entrance,
+    (appear) =>
+      appear >= 0.999
+        ? 'none'
+        : `blur(${(7 * (1 - appear)).toFixed(2)}px)`,
   );
 
   // Far cards sink into the dark: a veil is cheaper than CSS filters.
@@ -845,6 +888,7 @@ function RingCard({
       style={{
         transform,
         opacity,
+        filter,
         borderColor,
         backgroundColor,
         boxShadow,
