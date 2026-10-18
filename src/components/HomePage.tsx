@@ -1888,6 +1888,8 @@ export default function HomePage({
                     opacity: 1,
                     scale: 1,
                     filter: 'blur(0px)',
+                    // A leftover blur(0px) still costs a filter pass.
+                    transitionEnd: { filter: 'none' },
                   }}
                   transition={{ duration: 0.75, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
                 >

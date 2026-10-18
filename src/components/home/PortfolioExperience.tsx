@@ -424,10 +424,10 @@ export default function PortfolioExperience({
 
                     /*
                      * No opacity or brightness penalty.
-                     * All cards remain fully visible.
+                     * All cards remain fully visible. (No identity
+                     * filter either: it only cost a filter layer.)
                      */
                     opacity: 1,
-                    filter: 'brightness(1)',
                   }}
                   transition={{
                     type: 'spring',

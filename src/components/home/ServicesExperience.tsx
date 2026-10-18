@@ -51,6 +51,9 @@ export default function ServicesExperience({
     width: 0,
     height: 0,
   });
+  const glowRefs = useRef<
+    (HTMLSpanElement | null)[]
+  >([]);
   const angleRef = useRef(0);
   const speedRef = useRef(1);
   const hoveredIndexRef =
@@ -191,10 +194,13 @@ export default function ServicesExperience({
           : String(
               Math.round(depth * 100),
             );
-        card.style.setProperty(
-          '--orbit-depth',
-          depth.toFixed(3),
-        );
+
+        const glow = glowRefs.current[index];
+
+        if (glow) {
+          glow.style.opacity =
+            depth.toFixed(3);
+        }
       },
     );
   
@@ -304,7 +310,7 @@ export default function ServicesExperience({
                     onNavigateToServices();
                   }}
                   aria-label={`Explorar ${service.title}`}
-                  className="group pointer-events-auto relative w-[clamp(12rem,14.5vw,20rem)] cursor-pointer rounded-[22px] border border-white/[0.13] bg-[#0b1018]/[0.88] p-5 text-left shadow-[0_24px_70px_rgba(56,189,248,calc(var(--orbit-depth,0)*0.1)),inset_0_1px_0_rgba(255,255,255,0.06)] transition-[border-color,background-color] duration-500 hover:border-sky-300/45 hover:bg-[#0d1520]/[0.92] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-400"
+                  className="group pointer-events-auto relative w-[clamp(12rem,14.5vw,20rem)] cursor-pointer rounded-[22px] border border-white/[0.13] bg-[#0b1018]/[0.88] p-5 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition-[border-color,background-color] duration-500 hover:border-sky-300/45 hover:bg-[#0d1520]/[0.92] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-400"
                   initial={{
                     opacity: 0,
                     scale: 0.92,
@@ -316,6 +322,10 @@ export default function ServicesExperience({
                     scale: 1,
                     filter:
                       'blur(0px)',
+                    // A leftover blur(0px) still costs a filter pass.
+                    transitionEnd: {
+                      filter: 'none',
+                    },
                   }}
                   transition={{
                     opacity: {
@@ -344,6 +354,20 @@ export default function ServicesExperience({
                     },
                   }}
                 >
+                  {/*
+                   * Depth glow: a fixed shadow whose opacity follows the
+                   * orbit depth (set by the orbit loop). Same result as
+                   * an rgba(..., depth * 0.1) shadow, without repainting
+                   * a 70px blur on every frame.
+                   */}
+                  <span
+                    ref={(element) => {
+                      glowRefs.current[index] = element;
+                    }}
+                    aria-hidden="true"
+                    className="pointer-events-none absolute -inset-px rounded-[22px] opacity-0 shadow-[0_24px_70px_rgba(56,189,248,0.1)] will-change-[opacity]"
+                  />
+
                   <div className="pointer-events-none flex items-start justify-between gap-5">
                     <span className="font-mono text-[8px] font-bold tracking-[0.28em] text-sky-400">
                       {service.id}
