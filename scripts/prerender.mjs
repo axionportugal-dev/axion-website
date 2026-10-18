@@ -21,9 +21,17 @@ const {
   render,
   prerenderRoutes,
   getSeoForPath,
+  getRouteKey,
+  preloadAllPages,
 } = await import(
   pathToFileURL(ssrEntry).href
 );
+
+/*
+ * Pages are code-split (src/lazyPage.tsx). Resolve them all first so
+ * renderToString outputs real markup instead of Suspense fallbacks.
+ */
+await preloadAllPages();
 
 const templatePath =
   path.join(
@@ -206,7 +214,7 @@ for (
 
   page = page.replace(
     rootPattern,
-    `<div id="root">${appHtml}</div>`,
+    `<div id="root" data-route="${getRouteKey(route)}">${appHtml}</div>`,
   );
 
   const outputPath =
@@ -289,7 +297,7 @@ for (
 
   page = page.replace(
     rootPattern,
-    `<div id="root">${appHtml}</div>`,
+    `<div id="root" data-route="${getRouteKey('/404')}">${appHtml}</div>`,
   );
 
   await fs.writeFile(

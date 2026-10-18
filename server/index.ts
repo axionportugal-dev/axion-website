@@ -7,6 +7,7 @@ import {
 } from 'node:http';
 
 import {
+  readdir,
   readFile,
   stat,
 } from 'node:fs/promises';
@@ -16,8 +17,12 @@ import {
 } from 'node:fs';
 
 import {
+  brotliCompress,
+  brotliCompressSync,
+  constants as zlibConstants,
   gzipSync,
 } from 'node:zlib';
+import { promisify } from 'node:util';
 
 import path from 'node:path';
 
@@ -118,6 +123,124 @@ const MIME_TYPES: Record<
 
   '.woff2':
     'font/woff2',
+};
+
+/*
+ * Compressed static files, computed once per file version instead of
+ * on every request. Keyed by path; invalidated when mtime/size change.
+ */
+interface CompressedEntry {
+  mtimeMs: number;
+  size: number;
+  gzip?: Buffer;
+  brotli?: Buffer;
+}
+
+const compressedCache =
+  new Map<string, CompressedEntry>();
+
+const getCompressed = (
+  filePath: string,
+  file: Buffer,
+  mtimeMs: number,
+  encoding: 'br' | 'gzip',
+) => {
+  let entry =
+    compressedCache.get(filePath);
+
+  if (
+    !entry ||
+    entry.mtimeMs !== mtimeMs ||
+    entry.size !== file.byteLength
+  ) {
+    entry = {
+      mtimeMs,
+      size: file.byteLength,
+    };
+
+    compressedCache.set(
+      filePath,
+      entry,
+    );
+  }
+
+  if (encoding === 'br') {
+    entry.brotli ??=
+      brotliCompressSync(file, {
+        params: {
+          [zlibConstants.BROTLI_PARAM_QUALITY]: 11,
+          [zlibConstants.BROTLI_PARAM_SIZE_HINT]:
+            file.byteLength,
+        },
+      });
+
+    return entry.brotli;
+  }
+
+  entry.gzip ??= gzipSync(file, {
+    level: 9,
+  });
+
+  return entry.gzip;
+};
+
+const brotliCompressAsync =
+  promisify(brotliCompress);
+
+/*
+ * Pre-compress every text asset at startup (off the main thread via the
+ * libuv pool), so the first visitor never waits for brotli level 11.
+ */
+const warmCompressionCache = async (
+  directory: string,
+): Promise<void> => {
+  const entries = await readdir(
+    directory,
+    { withFileTypes: true },
+  );
+
+  for (const entry of entries) {
+    const entryPath = path.join(
+      directory,
+      entry.name,
+    );
+
+    if (entry.isDirectory()) {
+      await warmCompressionCache(
+        entryPath,
+      );
+      continue;
+    }
+
+    if (
+      !COMPRESSIBLE_EXTENSIONS.has(
+        path.extname(entry.name).toLowerCase(),
+      )
+    ) {
+      continue;
+    }
+
+    const [file, fileStat] =
+      await Promise.all([
+        readFile(entryPath),
+        stat(entryPath),
+      ]);
+
+    const brotli =
+      await brotliCompressAsync(file, {
+        params: {
+          [zlibConstants.BROTLI_PARAM_QUALITY]: 11,
+          [zlibConstants.BROTLI_PARAM_SIZE_HINT]:
+            file.byteLength,
+        },
+      });
+
+    compressedCache.set(entryPath, {
+      mtimeMs: fileStat.mtimeMs,
+      size: file.byteLength,
+      brotli,
+    });
+  }
 };
 
 const setSecurityHeaders = (
@@ -455,25 +578,33 @@ const sendFile =
         filePath,
       );
 
-    const acceptsGzip =
+    const acceptEncoding =
       request.headers[
         'accept-encoding'
-      ]?.includes(
-        'gzip',
-      ) ?? false;
+      ] ?? '';
 
     const isCompressible =
       COMPRESSIBLE_EXTENSIONS.has(
         extension,
       );
 
-    const shouldCompress =
-      acceptsGzip &&
-      isCompressible;
+    const encoding =
+      !isCompressible
+        ? null
+        : acceptEncoding.includes('br')
+          ? 'br'
+          : acceptEncoding.includes('gzip')
+            ? 'gzip'
+            : null;
 
     const body =
-      shouldCompress
-        ? gzipSync(file)
+      encoding
+        ? getCompressed(
+            filePath,
+            file,
+            fileStat.mtimeMs,
+            encoding,
+          )
         : file;
 
     response.writeHead(
@@ -502,10 +633,10 @@ const sendFile =
             }
           : {}),
 
-        ...(shouldCompress
+        ...(encoding
           ? {
               'Content-Encoding':
-                'gzip',
+                encoding,
             }
           : {}),
       },
@@ -1029,6 +1160,15 @@ server.listen(
   () => {
     console.log(
       `AXION website running on port ${PORT}`,
+    );
+
+    warmCompressionCache(DIST_DIR).catch(
+      (error) => {
+        console.warn(
+          'Could not pre-compress static files:',
+          error,
+        );
+      },
     );
   },
 );

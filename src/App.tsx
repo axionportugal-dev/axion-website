@@ -1,4 +1,5 @@
-import React, {
+import {
+  Suspense,
   useEffect,
   useState,
 } from 'react';
@@ -9,13 +10,11 @@ import {
 } from 'motion/react';
 
 import WelcomeScreen from './components/WelcomeScreen';
-import HomePage from './components/HomePage';
-import BudgetPage from './components/BudgetPage';
-import ServicesPage from './components/ServicesPage';
 import Seo from './components/Seo';
 import StructuredData from './components/StructuredData';
 import NotFoundPage from './components/NotFoundPage';
-import PrivacyPage from './components/PrivacyPage';
+import PageLoadBoundary from './components/PageLoadBoundary';
+import { lazyPage } from './lazyPage';
 
 import {
   organizationStructuredData,
@@ -28,6 +27,90 @@ import {
   servicesHubSeo,
 } from './seo/seoConfig';
 
+/*
+ * Each page is its own chunk, so visiting one page does not download
+ * the code (and particle engines) of the others.
+ */
+const HomePage = lazyPage(
+  () => import('./components/HomePage'),
+);
+const ServicesPage = lazyPage(
+  () => import('./components/ServicesPage'),
+);
+const PrivacyPage = lazyPage(
+  () => import('./components/PrivacyPage'),
+);
+const BudgetPage = lazyPage(
+  () => import('./components/BudgetPage'),
+);
+
+const allPages = [
+  HomePage,
+  ServicesPage,
+  PrivacyPage,
+  BudgetPage,
+];
+
+const normalizePathname = (
+  pathname: string,
+) =>
+  pathname !== '/'
+    ? pathname.replace(/\/+$/, '')
+    : '/';
+
+/*
+ * Used by the prerenderer: every page must render synchronously.
+ */
+export const preloadAllPages = () =>
+  Promise.all(
+    allPages.map((page) =>
+      page.preload(),
+    ),
+  );
+
+/*
+ * Identifies which prerendered page some HTML belongs to. The prerenderer
+ * writes it on #root (data-route) and main.tsx only hydrates when it
+ * matches the current URL, so a host that serves the wrong HTML (e.g. an
+ * SPA fallback to index.html) never causes a hydration mismatch.
+ */
+export const getRouteKey = (
+  pathname: string,
+) => {
+  const normalized =
+    normalizePathname(pathname);
+
+  return normalized === '/' ||
+    normalized === '/servicos' ||
+    normalized === '/privacidade'
+    ? normalized
+    : 'not-found';
+};
+
+/*
+ * Used before hydration: load only the chunk the prerendered HTML needs.
+ */
+export const preloadPageForPath = (
+  pathname: string,
+) => {
+  const normalized =
+    normalizePathname(pathname);
+
+  if (normalized === '/servicos') {
+    return ServicesPage.preload(true);
+  }
+
+  if (normalized === '/privacidade') {
+    return PrivacyPage.preload(true);
+  }
+
+  if (normalized === '/') {
+    return HomePage.preload(true);
+  }
+
+  return Promise.resolve();
+};
+
 interface AppProps {
   initialPathname?: string;
 }
@@ -35,7 +118,7 @@ interface AppProps {
 export default function App({
   initialPathname,
 }: AppProps) {
-  const [theme, setTheme] =
+  const [theme] =
     useState<'light' | 'dark'>(
       'light',
     );
@@ -68,6 +151,60 @@ export default function App({
     'entered' |
     'budget'
   >('welcome');
+
+  /*
+   * The opening intro outlives the 'welcome' screen: once its mark starts
+   * morphing onto the hero logo the home page is already 'entered', but
+   * the overlay stays until the mark has landed and faded.
+   */
+  const [
+    introPhase,
+    setIntroPhase,
+  ] = useState<
+    'idle' |
+    'morphing' |
+    'landed'
+  >('idle');
+
+  const isIntroOverlayVisible =
+    currentScreen === 'welcome' ||
+    introPhase !== 'idle';
+
+  const isHeroLogoVisible =
+    currentScreen !== 'welcome' &&
+    introPhase !== 'morphing';
+
+  /*
+   * Prefetch the remaining pages once the browser is idle, so
+   * navigating never waits on the network.
+   */
+  useEffect(() => {
+    const prefetch = () => {
+      allPages.forEach((page) => {
+        page.preload().catch(() => {});
+      });
+    };
+
+    if (
+      typeof window.requestIdleCallback ===
+      'function'
+    ) {
+      const handle =
+        window.requestIdleCallback(
+          prefetch,
+          { timeout: 4000 },
+        );
+
+      return () =>
+        window.cancelIdleCallback(handle);
+    }
+
+    const timeout =
+      window.setTimeout(prefetch, 2500);
+
+    return () =>
+      window.clearTimeout(timeout);
+  }, []);
 
   /*
    * Synchronize theme with
@@ -146,11 +283,22 @@ export default function App({
     });
   };
 
-  const handleEnterSite =
+  const handleIntroReveal =
     () => {
       setCurrentScreen(
         'entered',
       );
+      setIntroPhase('morphing');
+    };
+
+  const handleIntroLand =
+    () => {
+      setIntroPhase('landed');
+    };
+
+  const handleIntroDone =
+    () => {
+      setIntroPhase('idle');
     };
 
   const handleBackToWelcome =
@@ -260,12 +408,7 @@ export default function App({
    * /servicos
    */
   const normalizedPathname =
-    pathname !== '/'
-      ? pathname.replace(
-          /\/+$/,
-          '',
-        )
-      : '/';
+    normalizePathname(pathname);
 
   /*
    * Public routes currently:
@@ -331,6 +474,7 @@ export default function App({
           }
         />
 
+        <PageLoadBoundary><Suspense fallback={null}>
         <ServicesPage
           onNavigateHome={
             handleNavigateFromServicesToHome
@@ -345,6 +489,7 @@ export default function App({
             handleNavigateToServicesHub
           }
         />
+        </Suspense></PageLoadBoundary>
       </>
     );
   }
@@ -362,6 +507,7 @@ export default function App({
         canonical="https://www.axion-enterprise.com/privacidade"
       />
 
+      <PageLoadBoundary><Suspense fallback={null}>
       <PrivacyPage
         onBackToHome={() => {
           window.history.pushState(
@@ -373,6 +519,7 @@ export default function App({
           setPathname('/');
         }}
       />
+      </Suspense></PageLoadBoundary>
     </>
   );
 }
@@ -402,6 +549,7 @@ export default function App({
       <div className="min-h-screen w-full font-sans antialiased selection:bg-sky-500/30 selection:text-sky-900 transition-all duration-700">
         {currentScreen !==
           'budget' && (
+          <PageLoadBoundary><Suspense fallback={null}>
           <HomePage
             initialStep={
               homeStep
@@ -422,12 +570,18 @@ export default function App({
             onNavigateToService={
               handleNavigateToService
             }
+            heroLogoVisible={
+              isHeroLogoVisible
+            }
+            interactionLocked={
+              isIntroOverlayVisible
+            }
           />
+          </Suspense></PageLoadBoundary>
         )}
 
         <AnimatePresence mode="wait">
-          {currentScreen ===
-            'welcome' && (
+          {isIntroOverlayVisible && (
             <motion.div
               key="welcome-screen-wrapper"
               initial={{
@@ -440,17 +594,22 @@ export default function App({
                 opacity: 0,
               }}
               transition={{
-                duration: 0.5,
+                duration: 0.2,
               }}
-              className="fixed inset-0 z-[100] w-full"
+              className="pointer-events-none fixed inset-0 z-[100] w-full"
             >
               <WelcomeScreen
                 theme={
                   theme
                 }
-                
-                onEnter={
-                  handleEnterSite
+                onReveal={
+                  handleIntroReveal
+                }
+                onLand={
+                  handleIntroLand
+                }
+                onDone={
+                  handleIntroDone
                 }
               />
             </motion.div>
@@ -474,11 +633,13 @@ export default function App({
               }}
               className="w-full"
             >
-              <BudgetPage
-                onBackToHome={
-                  handleBackToHome
-                }
-              />
+              <PageLoadBoundary><Suspense fallback={null}>
+                <BudgetPage
+                  onBackToHome={
+                    handleBackToHome
+                  }
+                />
+              </Suspense></PageLoadBoundary>
             </motion.div>
           )}
         </AnimatePresence>

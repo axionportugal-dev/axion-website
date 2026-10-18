@@ -31,6 +31,9 @@ interface Particle {
 
 const PARTICLE_COUNT = 2400;
 const TAU = Math.PI * 2;
+const POINT_SPRITE_SIZE = 32;
+const ENTRANCE_MS = 1400;
+const ENTRANCE_SPREAD = 2.4;
 
 export const SERVICES_PARTICLE_SHAPES: readonly ServicesParticleShape[] = [
   'cloud',
@@ -628,15 +631,58 @@ export default function ServicesParticleStage({
     let height = 0;
     let dpr = 1;
 
+    /*
+     * Pre-rendered anti-aliased disc, stamped with globalAlpha.
+     * Much cheaper than an arc path + new rgba() string per particle.
+     */
+    const pointSprite =
+      document.createElement('canvas');
+
+    pointSprite.width = POINT_SPRITE_SIZE;
+    pointSprite.height = POINT_SPRITE_SIZE;
+
+    const spriteContext =
+      pointSprite.getContext('2d');
+
+    if (spriteContext) {
+      spriteContext.fillStyle = '#ffffff';
+      spriteContext.beginPath();
+      spriteContext.arc(
+        POINT_SPRITE_SIZE / 2,
+        POINT_SPRITE_SIZE / 2,
+        POINT_SPRITE_SIZE / 2 - 1,
+        0,
+        TAU,
+      );
+      spriteContext.fill();
+    }
+
+    /*
+     * Adaptive quality for devices that cannot hold the frame budget:
+     * level 1 drops most halos, level 2 also draws every 2nd particle.
+     */
+    let lastTimestamp = 0;
+
+    /*
+     * Entrance: the particles arrive scattered past the screen edges and
+     * contract into the first shape - the reverse of the home sphere's
+     * dispersal when a services card is opened.
+     */
+    let entranceStart = 0;
+    let frameTimeAverage = 16.7;
+    let qualityLevel = 0;
+    let qualityCooldown = 0;
+
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
 
       width = rect.width;
       height = rect.height;
 
+      // Phones: 1.5x backing store is plenty for tiny points.
       dpr = Math.min(
         window.devicePixelRatio || 1,
-        2,
+        width < 1024 ? 1.5 : 2,
       );
 
       canvas.width = Math.round(width * dpr);
@@ -658,18 +704,26 @@ export default function ServicesParticleStage({
       maximum: number,
     ) => Math.min(maximum, Math.max(minimum, value));
 
-    const projectPoint = (
-      point: Point,
+    /*
+     * Projection constants for one shape, computed once per frame.
+     * x = centreX + point.x * scaleX, y = centreY + point.y * scaleY
+     */
+    const getProjection = (
       shape: ServicesParticleShape,
-    ): Point => {
+    ) => {
       const baseDimension = Math.min(width, height);
       const isCloud = shape === 'cloud';
 
+      // Phones: smaller shape in the top band so the text below stays clear.
+      const isPhone = width < 640;
+
       const scale = isCloud
         ? 1.12
-        : width < 900
-          ? 0.62
-          : 0.78;
+        : isPhone
+          ? 0.5
+          : width < 900
+            ? 0.62
+            : 0.78;
 
       const centreX = width * (
         isCloud
@@ -682,26 +736,19 @@ export default function ServicesParticleStage({
       const centreY = height * (
         isCloud
           ? 0.47
-          : width < 900
-            ? 0.34
-            : 0.51
+          : isPhone
+            ? 0.23
+            : width < 900
+              ? 0.34
+              : 0.51
       );
 
       if (isCloud) {
         return {
-          x:
-            centreX +
-            point.x *
-              baseDimension *
-              0.62 *
-              scale,
-
-          y:
-            centreY +
-            point.y *
-              baseDimension *
-              0.36 *
-              scale,
+          centreX,
+          centreY,
+          scaleX: baseDimension * 0.62 * scale,
+          scaleY: baseDimension * 0.36 * scale,
         };
       }
 
@@ -709,8 +756,10 @@ export default function ServicesParticleStage({
         baseDimension * 0.38 * scale;
 
       return {
-        x: centreX + point.x * shapeRadius,
-        y: centreY + point.y * shapeRadius,
+        centreX,
+        centreY,
+        scaleX: shapeRadius,
+        scaleY: shapeRadius,
       };
     };
 
@@ -720,6 +769,32 @@ export default function ServicesParticleStage({
     observer.observe(canvas);
 
     const draw = (timestamp: number) => {
+      if (lastTimestamp) {
+        const delta = Math.min(
+          timestamp - lastTimestamp,
+          100,
+        );
+
+        frameTimeAverage +=
+          (delta - frameTimeAverage) * 0.05;
+
+        qualityCooldown = Math.max(
+          0,
+          qualityCooldown - delta,
+        );
+
+        if (
+          qualityCooldown === 0 &&
+          frameTimeAverage > 24 &&
+          qualityLevel < 2
+        ) {
+          qualityLevel += 1;
+          qualityCooldown = 2000;
+        }
+      }
+
+      lastTimestamp = timestamp;
+
       context.clearRect(0, 0, width, height);
 
       const lastShapeIndex =
@@ -777,19 +852,105 @@ export default function ServicesParticleStage({
         morphProgress,
       );
 
+      if (!entranceStart) entranceStart = timestamp;
+
+      const entranceLinear = reduceMotion
+        ? 1
+        : Math.min(
+            1,
+            (timestamp - entranceStart) /
+              ENTRANCE_MS,
+          );
+      // easeOutCubic: fast arrival, gentle settle.
+      const entrance =
+        1 - (1 - entranceLinear) ** 3;
+      const entranceSpread =
+        1 + (1 - entrance) * ENTRANCE_SPREAD;
+
+      const fromProjectionBase =
+        getProjection(fromShape);
+      const toProjectionBase =
+        getProjection(toShape);
+
+      const fromProjection = {
+        ...fromProjectionBase,
+        scaleX: fromProjectionBase.scaleX * entranceSpread,
+        scaleY: fromProjectionBase.scaleY * entranceSpread,
+      };
+
+      const toProjection = {
+        ...toProjectionBase,
+        scaleX: toProjectionBase.scaleX * entranceSpread,
+        scaleY: toProjectionBase.scaleY * entranceSpread,
+      };
+
+      // Per-frame constants (identical for every particle).
+      const ambientX = lerp(
+        1.15,
+        2.6,
+        cloudWeight,
+      );
+
+      const ambientY = lerp(
+        0.8,
+        1.8,
+        cloudWeight,
+      );
+
+      const sizeFactor = lerp(
+        1.22,
+        1.08,
+        cloudWeight,
+      );
+
+      const alphaFactor = lerp(
+        0.92,
+        0.78,
+        cloudWeight,
+      );
+
+      // Phones draw every 3rd particle from the start (the shapes are small
+      // there, so they stay dense enough); slow devices drop to every 2nd
+      // through qualityLevel.
+      const particleStride =
+        width < 640
+          ? 3
+          : qualityLevel >= 2
+            ? 2
+            : 1;
+
+      /*
+       * On phones the shapes are drawn much smaller, so the same particles
+       * overlap far more and additive blending saturates to a white blob.
+       * Dim and shrink them to keep the shape readable.
+       */
+      const isPhone = width < 640;
+      const phoneAlpha = isPhone ? 0.9 : 1;
+      const phoneSize = isPhone ? 0.8 : 1;
+
       context.globalCompositeOperation = 'lighter';
 
       particlesRef.current.forEach(
         (particle, index) => {
-          const fromPoint = projectPoint(
-            fromPoints[index],
-            fromShape,
-          );
+          if (index % particleStride !== 0) {
+            return;
+          }
 
-          const toPoint = projectPoint(
-            toPoints[index],
-            toShape,
-          );
+          const fromRaw = fromPoints[index];
+          const toRaw = toPoints[index];
+
+          const fromX =
+            fromProjection.centreX +
+            fromRaw.x * fromProjection.scaleX;
+          const fromY =
+            fromProjection.centreY +
+            fromRaw.y * fromProjection.scaleY;
+          const toX =
+            toProjection.centreX +
+            toRaw.x * toProjection.scaleX;
+          const toY =
+            toProjection.centreY +
+            toRaw.y * toProjection.scaleY;
 
           /*
            * This is the important change:
@@ -798,27 +959,15 @@ export default function ServicesParticleStage({
            * animation that can continue after the user reverses direction.
            */
           const baseX = lerp(
-            fromPoint.x,
-            toPoint.x,
+            fromX,
+            toX,
             morphProgress,
           );
 
           const baseY = lerp(
-            fromPoint.y,
-            toPoint.y,
+            fromY,
+            toY,
             morphProgress,
-          );
-
-          const ambientX = lerp(
-            1.15,
-            2.6,
-            cloudWeight,
-          );
-
-          const ambientY = lerp(
-            0.8,
-            1.8,
-            cloudWeight,
           );
 
           const x =
@@ -847,66 +996,53 @@ export default function ServicesParticleStage({
                   particle.phase,
               ) * 0.14;
 
-          const sizeFactor = lerp(
-            1.22,
-            1.08,
-            cloudWeight,
-          );
-
-          const alphaFactor = lerp(
-            0.92,
-            0.78,
-            cloudWeight,
-          );
-
           const size =
             particle.size *
             sizeFactor *
+            phoneSize *
             twinkle;
 
           const alpha =
             particle.brightness *
             alphaFactor *
-            twinkle;
+            phoneAlpha *
+            twinkle *
+            entrance;
 
-          context.beginPath();
-          context.arc(
-            x,
-            y,
-            Math.max(0.35, size),
-            0,
-            TAU,
+          const radius = Math.max(0.35, size);
+
+          context.globalAlpha = Math.min(alpha, 1);
+          context.drawImage(
+            pointSprite,
+            x - radius,
+            y - radius,
+            radius * 2,
+            radius * 2,
           );
-
-          context.fillStyle =
-            `rgba(255,255,255,${Math.min(alpha, 1)})`;
-
-          context.fill();
 
           if (
             index % 14 === 0 ||
-            particle.brightness > 0.82
+            (qualityLevel === 0 &&
+              particle.brightness > 0.82)
           ) {
-            context.beginPath();
-            context.arc(
-              x,
-              y,
-              size * 4.2,
-              0,
-              TAU,
+            const glowRadius = size * 4.2;
+
+            context.globalAlpha = Math.min(
+              alpha * 0.18,
+              0.2,
             );
-
-            context.fillStyle =
-              `rgba(255,255,255,${Math.min(
-                alpha * 0.18,
-                0.2,
-              )})`;
-
-            context.fill();
+            context.drawImage(
+              pointSprite,
+              x - glowRadius,
+              y - glowRadius,
+              glowRadius * 2,
+              glowRadius * 2,
+            );
           }
         },
       );
 
+      context.globalAlpha = 1;
       context.globalCompositeOperation = 'source-over';
 
       frame = window.requestAnimationFrame(draw);

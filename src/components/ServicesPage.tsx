@@ -1,6 +1,7 @@
 import {
   useEffect,
   useRef,
+  useState,
 } from 'react';
 
 import {
@@ -18,6 +19,7 @@ import {
 
 import Logo from './Logo';
 import WebsiteFooter from './WebsiteFooter';
+import ScrollCue from './ScrollCue';
 
 import SpaceBackdrop from './home/SpaceBackdrop';
 
@@ -40,6 +42,117 @@ interface ServicesPageProps {
 
 const transitionEase =
   [0.16, 1, 0.3, 1] as const;
+
+/*
+ * Fixed scroll hint for /servicos.
+ *
+ * Shown while the visitor is stopped (hidden mid-scroll so it never sits on
+ * top of text being read) and removed near the end of the page, where the
+ * particle story is over.
+ */
+const SCROLL_CUE_IDLE_MS = 700;
+
+const TEXT_TAGS = new Set([
+  'P',
+  'H1',
+  'H2',
+  'H3',
+  'H4',
+  'SPAN',
+  'A',
+  'BUTTON',
+  'LI',
+  'SUMMARY',
+]);
+
+function ServicesPageScrollCue() {
+  const [visible, setVisible] =
+    useState(false);
+  const cueRef =
+    useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let idleTimer = 0;
+
+    const isNearEnd = () =>
+      window.scrollY +
+        window.innerHeight * 1.9 >=
+      document.documentElement
+        .scrollHeight;
+
+    // Never sit on top of text (mostly matters on phones, where the text
+    // column spans the full width). The cue itself has pointer-events:
+    // none, so elementsFromPoint skips it.
+    const isOverText = () => {
+      const cue = cueRef.current;
+
+      if (!cue) return false;
+
+      const rect =
+        cue.getBoundingClientRect();
+
+      const points = [
+        [rect.left + rect.width / 2, rect.top + 4],
+        [rect.left + rect.width / 2, rect.bottom - 4],
+      ];
+
+      return points.some(([x, y]) =>
+        document
+          .elementsFromPoint(x, y)
+          .some(
+            (element) =>
+              TEXT_TAGS.has(element.tagName) &&
+              element.closest('section'),
+          ),
+      );
+    };
+
+    const showIfUseful = () =>
+      setVisible(
+        !isNearEnd() && !isOverText(),
+      );
+
+    const handleScroll = () => {
+      setVisible(false);
+      window.clearTimeout(idleTimer);
+      idleTimer = window.setTimeout(
+        showIfUseful,
+        SCROLL_CUE_IDLE_MS,
+      );
+    };
+
+    idleTimer = window.setTimeout(
+      showIfUseful,
+      1200,
+    );
+
+    window.addEventListener(
+      'scroll',
+      handleScroll,
+      { passive: true },
+    );
+
+    return () => {
+      window.clearTimeout(idleTimer);
+      window.removeEventListener(
+        'scroll',
+        handleScroll,
+      );
+    };
+  }, []);
+
+  return (
+    <div
+      ref={cueRef}
+      className="pointer-events-none fixed bottom-6 left-1/2 z-[60] -translate-x-1/2 lg:left-[27%]"
+    >
+      <ScrollCue
+        label="Scroll"
+        visible={visible}
+      />
+    </div>
+  );
+}
 
 export default function ServicesPage({
   onNavigateHome,
@@ -314,6 +427,9 @@ export default function ServicesPage({
         }}
       />
 
+      {/* "Keep scrolling" hint for the scroll-driven particle story */}
+      <ServicesPageScrollCue />
+
       {/* Persistent galactic scene */}
       <div className="pointer-events-none fixed inset-0 z-0">
         <SpaceBackdrop />
@@ -331,18 +447,28 @@ export default function ServicesPage({
         />
       </div> 
 
-      {/* Dark readability veil */}
+      {/* Dark readability veil: text column on the right (desktop) */}
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed inset-0 z-[3]"
+        className="pointer-events-none fixed inset-0 z-[3] hidden lg:block"
         style={{
           background:
             'linear-gradient(90deg, rgba(0,0,0,0.14) 0%, rgba(0,0,0,0.1) 34%, rgba(0,0,0,0.2) 48%, rgba(0,0,0,0.56) 66%, rgba(0,0,0,0.76) 100%)',
         }}
       />
 
+      {/* Phones / tablets: shape lives in the top band, text below it */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 z-[3] lg:hidden"
+        style={{
+          background:
+            'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 12%, rgba(0,0,0,0) 34%, rgba(0,0,0,0.62) 50%, rgba(0,0,0,0.8) 100%)',
+        }}
+      />
+
       {/* Header */}
-      <header className="pointer-events-none fixed inset-x-0 top-0 z-50 flex items-center justify-between px-6 py-6 text-white md:px-8">
+      <header className="pointer-events-none fixed inset-x-0 top-0 z-50 flex items-center justify-between bg-gradient-to-b from-black/80 via-black/40 to-transparent px-6 pb-8 pt-6 text-white md:px-8 lg:bg-none lg:pb-6">
         <button
           type="button"
           onClick={
@@ -462,10 +588,23 @@ export default function ServicesPage({
           >
             {serviceAreas.map(
               (service, index) => (
-                <a
+                <motion.a
                   key={service.slug}
                   href={`#${service.slug}`}
-                  
+                  // Topics arrive one by one after the title, as the
+                  // particles settle into the cloud.
+                  initial={{
+                    opacity: 0,
+                    y: shouldReduceMotion ? 0 : 12,
+                  }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.55,
+                    delay: shouldReduceMotion
+                      ? 0
+                      : 0.45 + index * 0.07,
+                    ease: transitionEase,
+                  }}
                   className="group flex min-w-0 cursor-pointer items-center justify-between gap-4 border-b border-white/12 py-4 text-left transition-colors hover:border-white/35 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-400"
                 >
                   <span className="flex min-w-0 items-center gap-3">
@@ -482,18 +621,11 @@ export default function ServicesPage({
                     size={11}
                     className="shrink-0 text-white/30 transition-all duration-300 group-hover:translate-y-1 group-hover:text-sky-400"
                   />
-                </a>
+                </motion.a>
               ),
             )}
           </nav>
 
-          <div className="mt-14 flex flex-col items-center gap-3">
-            <span className="font-mono text-[7px] uppercase tracking-[0.28em] text-white/35">
-              Explorar
-            </span>
-
-            <div className="h-10 w-px bg-gradient-to-b from-sky-400/80 to-transparent" />
-          </div>
         </div>
       </section>
 
@@ -530,7 +662,7 @@ export default function ServicesPage({
               data-particle-shape={
                 service.slug
               }
-              className="relative z-10 flex min-h-screen scroll-mt-[76px] items-center px-6 py-28 md:px-12 lg:py-32"
+              className="relative z-10 flex min-h-screen scroll-mt-[76px] items-start px-6 pb-24 pt-[38vh] sm:pt-[52vh] md:px-12 lg:items-center lg:py-32"
             >
               <div className="mx-auto grid w-full max-w-7xl gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
                 {/* Left side intentionally belongs to the persistent particle stage */}
@@ -596,7 +728,7 @@ export default function ServicesPage({
                             key={
                               item
                             }
-                            className="rounded-full border border-white/14 bg-white/[0.05] px-3 py-2 text-[8px] font-bold uppercase tracking-[0.1em] text-white/78 backdrop-blur-md"
+                            className="rounded-full border border-white/14 bg-[#0e1116]/[0.86] px-3 py-2 text-[8px] font-bold uppercase tracking-[0.1em] text-white/78"
                           >
                             {
                               item

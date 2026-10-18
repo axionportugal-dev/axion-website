@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, animate, type AnimationPlaybackControls } from 'motion/react';
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -20,13 +20,14 @@ import { serviceAreas } from '../data/services';
 
 
 // Type-safe string paths for custom company logos uploaded to assets
-const revissantLogo = "/assets/revissant.png";
-const auraEventsLogo = "/assets/auraevents.png";
-const casasDoBecoLogo = "/assets/casasdobeco.png";
+const revissantLogo = "/assets/revissant-logo.webp";
+const auraEventsLogo = "/assets/auraevents-logo.webp";
+const casasDoBecoLogo = "/assets/casasdobeco-logo.webp";
 const revissantBackground = new URL('../../assets/revissantbackground.mp4', import.meta.url).href;
-const auraBackground = new URL('../../assets/aurabackground.jpg', import.meta.url).href;
+const auraBackground = new URL('../../assets/aurabackground.webp', import.meta.url).href;
 const casasDoBecoBackground = new URL('../../assets/casasdobecovideo.mp4', import.meta.url).href;
-const heroBackground = new URL('../../assets/herobw.png', import.meta.url).href;
+const heroBackground = new URL('../../assets/herobw.webp', import.meta.url).href;
+const heroBackgroundSmall = new URL('../../assets/herobw-960.webp', import.meta.url).href;
 
 
 
@@ -39,6 +40,16 @@ interface HomePageProps {
   onNavigateToBudget: () => void;
   onNavigateToServices: () => void;
   onNavigateToService: (slug: string) => void;
+  /*
+   * False while the opening intro's mark is flying onto the hero logo:
+   * the wordmark (and the lines under it) appear once it has landed.
+   */
+  heroLogoVisible?: boolean;
+  /*
+   * True until the opening intro has fully finished (wordmark, tagline and
+   * scroll hint): section navigation waits so animations never overlap.
+   */
+  interactionLocked?: boolean;
 }
 
 
@@ -142,6 +153,8 @@ export default function HomePage({
   isActive = true,
   onNavigateToBudget,
   onNavigateToServices,
+  heroLogoVisible = true,
+  interactionLocked = false,
 }: HomePageProps) {
   const [step, setStep] = useState(initialStep);
 
@@ -157,6 +170,14 @@ export default function HomePage({
   const sectionWheelDirectionRef = useRef(0);
   const sectionWheelLockedRef = useRef(false);
   const sectionWheelIdleTimerRef = useRef<number | null>(null);
+
+  // Mobile Evolution scrolls internally; these track whether a swipe began
+  // at the very top / bottom of that content (so it can leave the section).
+  const evolutionTouchRef = useRef({
+    startY: 0,
+    atTop: false,
+    atBottom: false,
+  });
 
 
   const portfolioArrivalLockRef =
@@ -215,6 +236,8 @@ export default function HomePage({
   
   // Pop-up states for Liquid Glass capabilities description (Light mode, clean glass)
   const [activePopupIdx, setActivePopupIdx] = useState<number | null>(null);
+  // Phones have no room for the header links: they open in a sheet instead.
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Portfolio active project index for the dynamic native video slider
   const [activeProjectIdx, setActiveProjectIdx] = useState<number>(0);
@@ -240,6 +263,21 @@ export default function HomePage({
   // Debouncing locks to make scrolling snappy and instant
   const isAnimatingRef = useRef(false);
 
+  const interactionLockedRef = useRef(interactionLocked);
+  interactionLockedRef.current = interactionLocked;
+
+  /*
+   * Touch navigation plays the same continuous Hero -> Services ->
+   * Portfolio morph that the wheel scrubs on desktop, instead of jumping
+   * straight to the end (which skipped the particle animation on phones).
+   */
+  const progressTweenRef = useRef<AnimationPlaybackControls | null>(null);
+  const isTweeningRef = useRef(false);
+
+  // Opening a services card: the sphere disperses, then the page changes.
+  const [servicesDisperse, setServicesDisperse] = useState(0);
+  const isDispersingRef = useRef(false);
+
   // Portfolio horizontal trackpad gesture state.
   // One physical swipe must move exactly one project.
   const portfolioHorizontalAccumulatorRef = useRef(0);
@@ -264,7 +302,9 @@ export default function HomePage({
   step === 4;
 
   useEffect(() => {
-    if (!isActive) {
+    // Parallax waits for the intro: the hero logo must stay exactly where
+    // the intro's mark lands.
+    if (!isActive || !heroLogoVisible) {
       return;
     }
 
@@ -287,52 +327,12 @@ export default function HomePage({
         handleMouseMove,
       );
     };
-  }, [isActive]);
-
-  // Background giant watermark logo style mapped per step + mouse offset
-  const getWatermarkStyle = () => {
-    let baseScale = 2.2;
-    let baseOpacity = 0.15;
-    let baseY = 0;
-
-    switch (step) {
-      case 0:
-        baseScale = 2.2;
-        baseOpacity = 0.15;
-        baseY = 0;
-        break;
-      case 1:
-        baseScale = 2.5;
-        baseOpacity = 0.11;
-        baseY = -30;
-        break;
-      case 2:
-        baseScale = 2.7;
-        baseOpacity = 0.03; // extremely subtle on dark stage
-        baseY = -60;
-        break;
-      case 3:
-        baseScale = 2.9;
-        baseOpacity = 0.04;
-        baseY = -95;
-        break;
-      case 4:
-        baseScale = 3;
-        baseOpacity = 0.03; // dark bg
-        baseY = 0;
-        break;
-    }
-
-    return {
-      scale: baseScale,
-      opacity: baseOpacity,
-      x: mouseOffset.x * 0.4,
-      y: baseY + mouseOffset.y * 0.4,
-    };
-  };
+  }, [isActive, heroLogoVisible]);
 
   const nextStep = () => {
     if (activePopupIdx !== null) return;
+    if (interactionLockedRef.current) return;
+    if (isMobileMenuOpen) return;
     if (isAnimatingRef.current) return;
 
     if (step === 0) {
@@ -450,6 +450,10 @@ export default function HomePage({
   };
 
   const navigateDirectlyToStep = (targetStep: number) => {
+    if (interactionLockedRef.current) return;
+
+    progressTweenRef.current?.stop();
+    isTweeningRef.current = false;
     setIsFooterVisible(false);
 
     if (targetStep === 0) {
@@ -471,6 +475,8 @@ export default function HomePage({
 
   const prevStep = () => {
     if (activePopupIdx !== null) return;
+    if (interactionLockedRef.current) return;
+    if (isMobileMenuOpen) return;
     if (isAnimatingRef.current) return;
 
     if (isFooterVisible) {
@@ -526,6 +532,134 @@ export default function HomePage({
     }
   };
 
+  const TOUCH_MORPH_SECONDS = 1.35;
+  const TOUCH_MORPH_EASE = [0.45, 0, 0.2, 1] as const;
+
+  const tweenProgress = (
+    from: number,
+    to: number,
+    update: (value: number) => void,
+    onComplete: () => void,
+  ) => {
+    progressTweenRef.current?.stop();
+    isTweeningRef.current = true;
+
+    progressTweenRef.current = animate(from, to, {
+      duration: TOUCH_MORPH_SECONDS,
+      ease: TOUCH_MORPH_EASE,
+      onUpdate: update,
+      onComplete: () => {
+        isTweeningRef.current = false;
+        progressTweenRef.current = null;
+        onComplete();
+      },
+    });
+  };
+
+  // Swipe up on touch screens.
+  const touchNext = () => {
+    if (activePopupIdx !== null || isMobileMenuOpen) return;
+
+    if (step === 0) {
+      setIsFooterVisible(false);
+      tweenProgress(
+        heroServicesProgressRef.current,
+        1,
+        updateHeroServicesProgress,
+        () => {
+          updateServicesPortfolioProgress(0);
+          setStep(1);
+        },
+      );
+      return;
+    }
+
+    if (step === 1) {
+      setIsFooterVisible(false);
+      tweenProgress(
+        servicesPortfolioProgressRef.current,
+        1,
+        updateServicesPortfolioProgress,
+        () => setStep(2),
+      );
+      return;
+    }
+
+    nextStep();
+  };
+
+  // Swipe down on touch screens.
+  const touchPrev = () => {
+    if (activePopupIdx !== null || isMobileMenuOpen) return;
+
+    if (step === 1) {
+      setIsFooterVisible(false);
+      setStep(0);
+      tweenProgress(
+        heroServicesProgressRef.current,
+        0,
+        updateHeroServicesProgress,
+        () => {},
+      );
+      return;
+    }
+
+    if (step === 2) {
+      setIsFooterVisible(false);
+      tweenProgress(
+        servicesPortfolioProgressRef.current,
+        0,
+        updateServicesPortfolioProgress,
+        () => {
+          updateHeroServicesProgress(1);
+          setStep(1);
+        },
+      );
+      return;
+    }
+
+    prevStep();
+  };
+
+  useEffect(
+    () => () => progressTweenRef.current?.stop(),
+    [],
+  );
+
+  const openServicesWithDisperse = () => {
+    if (isDispersingRef.current) return;
+
+    const goToServices = () => {
+      onNavigateToServices();
+
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: 'auto',
+      });
+    };
+
+    if (
+      window.matchMedia(
+        '(prefers-reduced-motion: reduce)',
+      ).matches
+    ) {
+      goToServices();
+      return;
+    }
+
+    isDispersingRef.current = true;
+    isTweeningRef.current = true;
+
+    animate(0, 1, {
+      duration: 0.85,
+      // Starts gently, then the burst accelerates away.
+      ease: [0.5, 0, 0.75, 0.2],
+      onUpdate: setServicesDisperse,
+      onComplete: goToServices,
+    });
+  };
+
   const lockAnimation = () => {
     isAnimatingRef.current = true;
     setTimeout(() => {
@@ -552,6 +686,8 @@ export default function HomePage({
     }
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault(); // prevent standard browser viewport scroll jump
+
+      if (interactionLockedRef.current || isTweeningRef.current) return;
 
 
       /*
@@ -1127,6 +1263,8 @@ export default function HomePage({
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (interactionLockedRef.current || isTweeningRef.current) return;
+
       if (e.key === 'ArrowRight' && step === 2) {
         e.preventDefault();
         nextProject();
@@ -1142,6 +1280,7 @@ export default function HomePage({
       } else if (e.key === 'Escape') {
         setIsFooterVisible(false);
         setActivePopupIdx(null);
+        setIsMobileMenuOpen(false);
       }
     };
 
@@ -1172,10 +1311,12 @@ export default function HomePage({
         }
       } else {
         if (Math.abs(deltaY) > 25) {
+          if (interactionLockedRef.current || isTweeningRef.current) return;
+
           if (deltaY > 0) {
-            nextStep();
+            touchNext();
           } else {
-            prevStep();
+            touchPrev();
           }
         }
       }
@@ -1194,7 +1335,7 @@ export default function HomePage({
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [isActive, step, activePopupIdx, activeProjectIdx, isFooterVisible]);
+  }, [isActive, step, activePopupIdx, activeProjectIdx, isFooterVisible, isMobileMenuOpen]);
 
   // Section names for the interactive side tracker
   const sectionLabels = ["Início", "Serviços", "Portfólio", "Evolução", "Orçamento"];
@@ -1317,7 +1458,8 @@ export default function HomePage({
 
   return (
     <main
-      className={`relative w-full h-screen bg-white transition-colors duration-300 overflow-hidden select-none ${
+      data-home-step={step}
+      className={`relative w-full h-dvh bg-white transition-colors duration-300 overflow-hidden select-none ${
         isDarkBg ? 'text-white' : 'text-slate-900'
       }`}
     >
@@ -1461,7 +1603,23 @@ export default function HomePage({
         })}
       </nav>
 
-        {/* Right Side: Back to Portal CTA Button */}
+        {/* Right Side: section menu (phones) + Back to Portal CTA Button */}
+        <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setIsMobileMenuOpen(true)}
+          aria-label="Abrir menu de secções"
+          aria-expanded={isMobileMenuOpen}
+          className={`pointer-events-auto flex h-[30px] w-[30px] cursor-pointer flex-col items-center justify-center gap-[5px] rounded-full border transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-400 md:hidden ${
+            isVisualDark
+              ? 'border-white/10 text-white'
+              : 'border-slate-900/10 text-slate-800'
+          }`}
+        >
+          <span className="block h-px w-3.5 bg-current" />
+          <span className="block h-px w-2.5 self-center bg-current" />
+        </button>
+
         <button
           onClick={onBack}
           className={`pointer-events-auto flex items-center space-x-2 px-4.5 py-2 rounded-full text-[8px] font-bold tracking-widest uppercase transition-all duration-300 border cursor-pointer select-none focus:outline-none ${
@@ -1473,7 +1631,77 @@ export default function HomePage({
           <ArrowLeft size={10} />
           <span>Portal</span>
         </button>
+        </div>
       </header>
+
+      {/* PHONE SECTION MENU */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            key="mobile-section-menu"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Secções"
+            className="fixed inset-0 z-[70] flex flex-col bg-[#020306]/[0.97] px-6 pb-10 pt-6 text-white md:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            onTouchStart={(event) => event.stopPropagation()}
+            onTouchMove={(event) => event.stopPropagation()}
+            onTouchEnd={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-[9px] font-bold uppercase tracking-[0.36em] text-sky-400/80">
+                AXION / Secções
+              </span>
+
+              <button
+                type="button"
+                onClick={() => setIsMobileMenuOpen(false)}
+                aria-label="Fechar menu"
+                className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-white/10 text-white/80 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-400"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <nav className="mt-14 flex flex-col">
+              {sectionLabels.map((label, idx) => (
+                <motion.button
+                  key={label}
+                  type="button"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.05 + idx * 0.04, duration: 0.3 }}
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    lockAnimation();
+                    navigateDirectlyToStep(idx);
+                  }}
+                  className="group flex cursor-pointer items-baseline gap-4 border-b border-white/[0.08] py-5 text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-400"
+                >
+                  <span className="font-mono text-[9px] font-bold tracking-[0.28em] text-sky-400">
+                    {String(idx + 1).padStart(2, '0')}
+                  </span>
+
+                  <span
+                    className={`text-[26px] font-black uppercase leading-none tracking-[-0.03em] ${
+                      step === idx ? 'text-white' : 'text-white/45'
+                    }`}
+                  >
+                    {label}
+                  </span>
+                </motion.button>
+              ))}
+            </nav>
+
+            <span className="mt-auto font-mono text-[8px] uppercase tracking-[0.3em] text-white/30">
+              © 2026 AXION • Tecnologia de prestígio
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* SINGLE SECTION CONTAINER WITH ENHANCED TRANSITIONS */}
       <div className="relative z-10 w-full h-full flex flex-col justify-center items-center px-6 md:px-12">
@@ -1504,6 +1732,9 @@ export default function HomePage({
                   ? particleCanvasTakeover
                   : 1
               }
+              disperseProgress={
+                servicesDisperse
+              }
             />
           </div>
         )}
@@ -1522,7 +1753,10 @@ export default function HomePage({
               {isActive && (
                 <motion.img
                   src={heroBackground}
+                  srcSet={`${heroBackgroundSmall} 960w, ${heroBackground} 1672w`}
+                  sizes="100vw"
                   alt=""
+                  decoding="async"
                   className="absolute inset-0 h-full w-full object-cover object-center pointer-events-none"
                   initial={{ opacity: 0, scale: 1.075 }}
                   animate={{
@@ -1619,22 +1853,43 @@ export default function HomePage({
                       opacity: 1 - particleCanvasTakeover,
                     }}
                     ref={heroLogoRef}
+                    data-hero-logo
                     animate={{
                       x: mouseOffset.x * 0.55,
                       y: mouseOffset.y * 0.55,
                     }}
                     transition={{ type: 'spring', stiffness: 85, damping: 24, mass: 0.65 }}
                   >
-                    <div className="absolute inset-1/4 rounded-full bg-sky-300/20 blur-[80px] pointer-events-none" />
-                    <Logo theme="dark" glow={false} className="h-64 w-[24rem] max-w-[88vw] sm:h-72 sm:w-[32rem] md:h-[24rem] md:w-[42rem] lg:h-[28rem] lg:w-[50rem]" />
+                    {/* Revealed when the intro's mark lands on its "A" */}
+                    <motion.div
+                      initial={false}
+                      animate={{
+                        opacity: heroLogoVisible ? 1 : 0,
+                      }}
+                      transition={{
+                        duration: heroLogoVisible ? 0.6 : 0,
+                        ease: 'easeOut',
+                      }}
+                    >
+                      <div className="absolute inset-1/4 rounded-full bg-sky-300/20 blur-[80px] pointer-events-none" />
+                      <Logo theme="dark" glow={false} className="h-64 w-[24rem] max-w-[88vw] sm:h-72 sm:w-[32rem] md:h-[24rem] md:w-[42rem] lg:h-[28rem] lg:w-[50rem]" />
+                    </motion.div>
                   </motion.div>
                 </motion.div>
 
                 <motion.div
                   className="-mt-10 sm:-mt-14 flex flex-col items-center"
                   initial={{ opacity: 0, y: 14 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.55, delay: 0.65, ease: 'easeOut' }}
+                  animate={
+                    heroLogoVisible
+                      ? { opacity: 1, y: 0 }
+                      : { opacity: 0, y: 14 }
+                  }
+                  transition={{
+                    duration: 0.55,
+                    delay: heroLogoVisible ? 0.25 : 0,
+                    ease: 'easeOut',
+                  }}
                 >
                   <h1 className="max-w-2xl text-[9px] sm:text-[10px] tracking-[0.3em] font-extrabold uppercase text-slate-200 leading-relaxed drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)]">
                     Design Estratégico • Performance Digital • Experiências Memoráveis
@@ -1645,8 +1900,13 @@ export default function HomePage({
               <motion.div
                 className="absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 pointer-events-none"
                 initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.9 }}
+                animate={{
+                  opacity: heroLogoVisible ? 1 : 0,
+                }}
+                transition={{
+                  duration: 0.5,
+                  delay: heroLogoVisible ? 0.5 : 0,
+                }}
               >
                 <span className="text-[8px] tracking-[0.3em] font-bold uppercase text-white/60">Scroll para navegar</span>
                 <div className="w-px h-8 overflow-hidden relative bg-white/15">
@@ -1683,8 +1943,13 @@ export default function HomePage({
                 <div
                   className="absolute inset-0"
                   style={{
+                    // Cards fade fast while the sphere disperses.
                     opacity:
-                      servicesContentOpacity,
+                      servicesContentOpacity *
+                      Math.max(
+                        0,
+                        1 - servicesDisperse * 2.2,
+                      ),
 
                     transform:
                       `scale(${servicesContentScale})`,
@@ -1694,15 +1959,9 @@ export default function HomePage({
                   }}
                 >
                   <ServicesExperience
-                    onNavigateToServices={() => {
-                      onNavigateToServices();
-
-                      window.scrollTo({
-                        top: 0,
-                        left: 0,
-                        behavior: 'auto',
-                      });
-                    }}
+                    onNavigateToServices={
+                      openServicesWithDisperse
+                    }
                   />
                 </div>
               )}
@@ -2106,12 +2365,48 @@ export default function HomePage({
                 }}
                 onTouchStart={(event) => {
                   event.stopPropagation();
+
+                  const container =
+                    event.currentTarget;
+
+                  evolutionTouchRef.current = {
+                    startY:
+                      event.touches[0].clientY,
+                    atTop:
+                      container.scrollTop <= 1,
+                    atBottom:
+                      container.scrollTop +
+                        container.clientHeight >=
+                      container.scrollHeight - 2,
+                  };
                 }}
                 onTouchMove={(event) => {
                   event.stopPropagation();
                 }}
                 onTouchEnd={(event) => {
                   event.stopPropagation();
+
+                  const { startY, atTop, atBottom } =
+                    evolutionTouchRef.current;
+
+                  const deltaY =
+                    event.changedTouches[0].clientY -
+                    startY;
+
+                  /*
+                   * The content scrolls natively; only a deliberate swipe
+                   * that starts at an edge leaves the section:
+                   * pull down at the top -> back to Portfolio,
+                   * push up at the bottom -> on to Orçamento.
+                   */
+                  if (atTop && deltaY > 70) {
+                    prevStep();
+                  } else if (
+                    atBottom &&
+                    deltaY < -70
+                  ) {
+                    nextStep();
+                  }
                 }}
               >
                 <div className="mx-auto w-full max-w-md">
@@ -2217,6 +2512,20 @@ export default function HomePage({
                         </button>
                       );
                     })}
+                  </div>
+
+                  {/* Vertical system diagram (phones / portrait tablets) */}
+                  <div className="relative mt-6 aspect-[430/620] w-full max-w-[26rem] self-center sm:mx-auto">
+                    <span className="absolute left-0 top-0 z-10 font-mono text-[7px] font-bold uppercase tracking-[0.24em] text-slate-400">
+                      Arquitetura digital / visualização
+                    </span>
+
+                    <div className="h-full w-full pt-5">
+                      <EvolutionSystemDiagram
+                        stage={activeEvolutionStage}
+                        orientation="portrait"
+                      />
+                    </div>
                   </div>
 
                   {/* Active stage */}
@@ -2341,7 +2650,7 @@ export default function HomePage({
 
         {/* GLOBAL MINIMALIST FOOTER */}
         {!isFooterVisible && (
-          <div className={`absolute bottom-6 left-1/2 -translate-x-1/2 text-[8px] font-mono tracking-[0.3em] uppercase z-30 select-none pointer-events-none ${
+          <div className={`absolute bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap text-[7px] font-mono tracking-[0.2em] uppercase z-30 select-none pointer-events-none sm:text-[8px] sm:tracking-[0.3em] ${
             isVisualDark ? 'text-slate-600' : 'text-slate-400'
           }`}>
             <span>© 2026 AXION • TECNOLOGIA DE PRESTÍGIO</span>
