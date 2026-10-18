@@ -7,7 +7,6 @@ import {
 import {
   animate,
   motion,
-  useAnimationFrame,
   useMotionValue,
   useReducedMotion,
   useTransform,
@@ -58,6 +57,13 @@ export default function ServicesExperience({
     useRef<number | null>(null);
   const prefersReducedMotion =
     useReducedMotion();
+  const prefersReducedMotionRef =
+    useRef(prefersReducedMotion);
+  prefersReducedMotionRef.current =
+    prefersReducedMotion;
+
+  // Starts the orbit loop; it stops by itself while the stage is hidden.
+  const startOrbitRef = useRef(() => {});
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -69,6 +75,8 @@ export default function ServicesExperience({
         width: stage.clientWidth,
         height: stage.clientHeight,
       };
+
+      startOrbitRef.current();
     };
 
     measure();
@@ -81,18 +89,22 @@ export default function ServicesExperience({
       resizeObserver.disconnect();
   }, []);
 
-  useAnimationFrame((_, delta) => {
+  /*
+   * The desktop orbit is hidden (zero size) on phones and tablets: there
+   * the loop stays stopped instead of waking the page every frame.
+   */
+  const stepOrbit = (delta: number) => {
     const { width, height } =
       stageSizeRef.current;
 
-    if (!width || !height) return;
+    if (!width || !height) return false;
 
     const hoveredIndex =
       hoveredIndexRef.current;
 
     // Ease to a stop while a card is hovered, then ease back up.
     const targetSpeed =
-      prefersReducedMotion ||
+      prefersReducedMotionRef.current ||
       hoveredIndex !== null
         ? 0
         : 1;
@@ -185,7 +197,45 @@ export default function ServicesExperience({
         );
       },
     );
-  });
+  
+    return true;
+  };
+
+  const stepOrbitRef = useRef(stepOrbit);
+  stepOrbitRef.current = stepOrbit;
+
+  useEffect(() => {
+    let frame = 0;
+    let lastTimestamp = 0;
+
+    const tick = (timestamp: number) => {
+      // Same 40ms delta cap as motion's frame loop.
+      const delta = lastTimestamp
+        ? Math.min(timestamp - lastTimestamp, 40)
+        : 1000 / 60;
+
+      lastTimestamp = timestamp;
+
+      if (!stepOrbitRef.current(delta)) {
+        frame = 0;
+        lastTimestamp = 0;
+        return;
+      }
+
+      frame = requestAnimationFrame(tick);
+    };
+
+    startOrbitRef.current = () => {
+      if (!frame) frame = requestAnimationFrame(tick);
+    };
+
+    startOrbitRef.current();
+
+    return () => {
+      cancelAnimationFrame(frame);
+      startOrbitRef.current = () => {};
+    };
+  }, []);
 
   return (
     <div className="absolute inset-0 overflow-hidden text-white">

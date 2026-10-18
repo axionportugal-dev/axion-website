@@ -65,6 +65,68 @@
   animation: axion-backdrop-breathe 12s ease-in-out infinite;
 }
 
+/*
+ * FloatingTriangles: compositor-only float + spin. Keyframes use fixed
+ * values (no var()) so browsers can run them off the main thread; the
+ * three float heights match the three triangle speeds.
+ */
+@keyframes axion-triangle-float-0 {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4.8px);
+  }
+}
+
+@keyframes axion-triangle-float-1 {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8.4px);
+  }
+}
+
+@keyframes axion-triangle-float-2 {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes axion-triangle-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.axion-triangle-float {
+  animation-duration: 5s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+.axion-triangle-spin {
+  animation: axion-triangle-spin 45s linear infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .axion-triangle-float,
+  .axion-triangle-spin {
+    animation: none;
+  }
+}
+
 /* ScrollCue: pulse travelling down a hairline. */
 @keyframes axion-scroll-cue {
   0% {

@@ -1949,11 +1949,8 @@ export default function HomePage({
               >
                 <span className="text-[8px] tracking-[0.3em] font-bold uppercase text-white/60">Scroll para navegar</span>
                 <div className="w-px h-8 overflow-hidden relative bg-white/15">
-                  <motion.div
-                    className="absolute left-0 top-0 h-1/2 w-full bg-sky-300"
-                    animate={{ y: ['-100%', '200%'] }}
-                    transition={{ duration: 1.7, repeat: Infinity, ease: 'easeInOut' }}
-                  />
+                  {/* CSS animation: runs on the compositor (see ScrollCue). */}
+                  <div className="axion-scroll-cue-pulse absolute left-0 top-0 h-1/2 w-full bg-sky-300" />
                 </div>
               </motion.div>
             </motion.div>

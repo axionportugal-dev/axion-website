@@ -206,6 +206,40 @@ export default function AxionParticleField({
     disperseProgress,
   };
 
+  /*
+   * While the canvas is invisible (e.g. the Hero at rest) the loop sleeps
+   * instead of requesting a frame every vsync - which also lets the page's
+   * CSS animations run purely on the compositor. Any progress change wakes
+   * it up.
+   */
+  const wakeRef = useRef(() => {});
+
+  useEffect(() => {
+    const wake = () => wakeRef.current();
+
+    wake();
+
+    const unsubscribers = [
+      morphProgress,
+      servicesPortfolioProgress,
+      opacity,
+      disperseProgress,
+    ]
+      .filter(
+        (value): value is MotionValue<number> =>
+          typeof value !== 'number',
+      )
+      .map((value) => value.on('change', wake));
+
+    return () =>
+      unsubscribers.forEach((unsubscribe) => unsubscribe());
+  }, [
+    morphProgress,
+    servicesPortfolioProgress,
+    opacity,
+    disperseProgress,
+  ]);
+
   const sourceMetricsRef = useRef({
     drawWidth: SAMPLE_WIDTH,
     drawHeight: SAMPLE_HEIGHT,
@@ -655,10 +689,22 @@ export default function AxionParticleField({
     let lastCloud = -1;
     let lastDisperse = -1;
     let lastOpacity = -1;
+    let sleeping = false;
+
+    wakeRef.current = () => {
+      if (!sleeping) return;
+
+      sleeping = false;
+      frame =
+        window.requestAnimationFrame(
+          draw,
+        );
+    };
 
     const resize = () => {
       // Resizing clears the canvas: draw again on the next frame.
       lastDrawTimestamp = 0;
+      wakeRef.current();
 
       const rect =
         canvas.getBoundingClientRect();
@@ -830,12 +876,11 @@ export default function AxionParticleField({
         opacityInput *
         (1 - disperse) ** 1.4;
 
-      // Nothing visible: keep the loop alive but skip all per-point work.
+      // Nothing visible (the canvas was just cleared): sleep until a
+      // progress value changes.
       if (globalOpacity <= 0.001) {
-        frame =
-          window.requestAnimationFrame(
-            draw,
-          );
+        sleeping = true;
+        lastTimestamp = 0;
 
         return;
       }
@@ -1644,6 +1689,9 @@ export default function AxionParticleField({
       window.cancelAnimationFrame(
         frame,
       );
+
+      sleeping = false;
+      wakeRef.current = () => {};
 
       resizeObserver.disconnect();
     };
