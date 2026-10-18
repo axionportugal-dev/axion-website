@@ -153,6 +153,28 @@ export default function App({
   >('welcome');
 
   /*
+   * The opening intro outlives the 'welcome' screen: once its mark starts
+   * morphing onto the hero logo the home page is already 'entered', but
+   * the overlay stays until the mark has landed and faded.
+   */
+  const [
+    introPhase,
+    setIntroPhase,
+  ] = useState<
+    'idle' |
+    'morphing' |
+    'landed'
+  >('idle');
+
+  const isIntroOverlayVisible =
+    currentScreen === 'welcome' ||
+    introPhase !== 'idle';
+
+  const isHeroLogoVisible =
+    currentScreen !== 'welcome' &&
+    introPhase !== 'morphing';
+
+  /*
    * Prefetch the remaining pages once the browser is idle, so
    * navigating never waits on the network.
    */
@@ -261,11 +283,22 @@ export default function App({
     });
   };
 
-  const handleEnterSite =
+  const handleIntroReveal =
     () => {
       setCurrentScreen(
         'entered',
       );
+      setIntroPhase('morphing');
+    };
+
+  const handleIntroLand =
+    () => {
+      setIntroPhase('landed');
+    };
+
+  const handleIntroDone =
+    () => {
+      setIntroPhase('idle');
     };
 
   const handleBackToWelcome =
@@ -537,13 +570,15 @@ export default function App({
             onNavigateToService={
               handleNavigateToService
             }
+            heroLogoVisible={
+              isHeroLogoVisible
+            }
           />
           </Suspense></PageLoadBoundary>
         )}
 
         <AnimatePresence mode="wait">
-          {currentScreen ===
-            'welcome' && (
+          {isIntroOverlayVisible && (
             <motion.div
               key="welcome-screen-wrapper"
               initial={{
@@ -556,17 +591,22 @@ export default function App({
                 opacity: 0,
               }}
               transition={{
-                duration: 0.5,
+                duration: 0.2,
               }}
-              className="fixed inset-0 z-[100] w-full"
+              className="pointer-events-none fixed inset-0 z-[100] w-full"
             >
               <WelcomeScreen
                 theme={
                   theme
                 }
-                
-                onEnter={
-                  handleEnterSite
+                onReveal={
+                  handleIntroReveal
+                }
+                onLand={
+                  handleIntroLand
+                }
+                onDone={
+                  handleIntroDone
                 }
               />
             </motion.div>

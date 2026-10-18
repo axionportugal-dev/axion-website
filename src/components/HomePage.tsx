@@ -40,6 +40,11 @@ interface HomePageProps {
   onNavigateToBudget: () => void;
   onNavigateToServices: () => void;
   onNavigateToService: (slug: string) => void;
+  /*
+   * False while the opening intro's mark is flying onto the hero logo:
+   * the wordmark (and the lines under it) appear once it has landed.
+   */
+  heroLogoVisible?: boolean;
 }
 
 
@@ -143,6 +148,7 @@ export default function HomePage({
   isActive = true,
   onNavigateToBudget,
   onNavigateToServices,
+  heroLogoVisible = true,
 }: HomePageProps) {
   const [step, setStep] = useState(initialStep);
 
@@ -275,7 +281,9 @@ export default function HomePage({
   step === 4;
 
   useEffect(() => {
-    if (!isActive) {
+    // Parallax waits for the intro: the hero logo must stay exactly where
+    // the intro's mark lands.
+    if (!isActive || !heroLogoVisible) {
       return;
     }
 
@@ -298,7 +306,7 @@ export default function HomePage({
         handleMouseMove,
       );
     };
-  }, [isActive]);
+  }, [isActive, heroLogoVisible]);
 
   const nextStep = () => {
     if (activePopupIdx !== null) return;
@@ -1681,22 +1689,43 @@ export default function HomePage({
                       opacity: 1 - particleCanvasTakeover,
                     }}
                     ref={heroLogoRef}
+                    data-hero-logo
                     animate={{
                       x: mouseOffset.x * 0.55,
                       y: mouseOffset.y * 0.55,
                     }}
                     transition={{ type: 'spring', stiffness: 85, damping: 24, mass: 0.65 }}
                   >
-                    <div className="absolute inset-1/4 rounded-full bg-sky-300/20 blur-[80px] pointer-events-none" />
-                    <Logo theme="dark" glow={false} className="h-64 w-[24rem] max-w-[88vw] sm:h-72 sm:w-[32rem] md:h-[24rem] md:w-[42rem] lg:h-[28rem] lg:w-[50rem]" />
+                    {/* Revealed when the intro's mark lands on its "A" */}
+                    <motion.div
+                      initial={false}
+                      animate={{
+                        opacity: heroLogoVisible ? 1 : 0,
+                      }}
+                      transition={{
+                        duration: heroLogoVisible ? 0.6 : 0,
+                        ease: 'easeOut',
+                      }}
+                    >
+                      <div className="absolute inset-1/4 rounded-full bg-sky-300/20 blur-[80px] pointer-events-none" />
+                      <Logo theme="dark" glow={false} className="h-64 w-[24rem] max-w-[88vw] sm:h-72 sm:w-[32rem] md:h-[24rem] md:w-[42rem] lg:h-[28rem] lg:w-[50rem]" />
+                    </motion.div>
                   </motion.div>
                 </motion.div>
 
                 <motion.div
                   className="-mt-10 sm:-mt-14 flex flex-col items-center"
                   initial={{ opacity: 0, y: 14 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.55, delay: 0.65, ease: 'easeOut' }}
+                  animate={
+                    heroLogoVisible
+                      ? { opacity: 1, y: 0 }
+                      : { opacity: 0, y: 14 }
+                  }
+                  transition={{
+                    duration: 0.55,
+                    delay: heroLogoVisible ? 0.25 : 0,
+                    ease: 'easeOut',
+                  }}
                 >
                   <h1 className="max-w-2xl text-[9px] sm:text-[10px] tracking-[0.3em] font-extrabold uppercase text-slate-200 leading-relaxed drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)]">
                     Design Estratégico • Performance Digital • Experiências Memoráveis
@@ -1707,8 +1736,13 @@ export default function HomePage({
               <motion.div
                 className="absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 pointer-events-none"
                 initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.9 }}
+                animate={{
+                  opacity: heroLogoVisible ? 1 : 0,
+                }}
+                transition={{
+                  duration: 0.5,
+                  delay: heroLogoVisible ? 0.5 : 0,
+                }}
               >
                 <span className="text-[8px] tracking-[0.3em] font-bold uppercase text-white/60">Scroll para navegar</span>
                 <div className="w-px h-8 overflow-hidden relative bg-white/15">
