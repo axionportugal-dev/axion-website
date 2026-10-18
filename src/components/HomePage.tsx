@@ -1,5 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, animate, type AnimationPlaybackControls } from 'motion/react';
+import {
+  motion,
+  AnimatePresence,
+  animate,
+  useMotionValue,
+  useMotionValueEvent,
+  useTransform,
+  type AnimationPlaybackControls,
+} from 'motion/react';
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -191,8 +199,14 @@ export default function HomePage({
   const initialHeroServicesProgress =
     initialStep === 1 ? 1 : 0;
 
-  const [heroServicesProgress, setHeroServicesProgress] =
-    useState(initialHeroServicesProgress);
+  /*
+   * The transition progress values are motion values, not React state:
+   * they change on every frame while scrubbing, and only the elements
+   * bound to them (and the particle canvas) update, never the whole page.
+   */
+  const heroServicesProgress = useMotionValue(
+    initialHeroServicesProgress,
+  );
 
   const heroServicesProgressRef = useRef(
     initialHeroServicesProgress,
@@ -201,11 +215,24 @@ export default function HomePage({
   const initialServicesPortfolioProgress =
     initialStep >= 2 ? 1 : 0;
 
-  const [
-    servicesPortfolioProgress,
-    setServicesPortfolioProgress,
-  ] = useState(
+  const servicesPortfolioProgress = useMotionValue(
     initialServicesPortfolioProgress,
+  );
+
+  // Services and Portfolio UI mount around the morph (see the render):
+  // React only hears about it when one of these thresholds is crossed.
+  const [isServicesContentMounted, setIsServicesContentMounted] =
+    useState(initialServicesPortfolioProgress <= 0.21);
+  const [isPortfolioContentMounted, setIsPortfolioContentMounted] =
+    useState(initialServicesPortfolioProgress >= 0.79);
+
+  useMotionValueEvent(
+    servicesPortfolioProgress,
+    'change',
+    (value) => {
+      setIsServicesContentMounted(value <= 0.21);
+      setIsPortfolioContentMounted(value >= 0.79);
+    },
   );
 
   const servicesPortfolioProgressRef =
@@ -222,7 +249,7 @@ export default function HomePage({
     servicesPortfolioProgressRef.current =
       nextValue;
 
-    setServicesPortfolioProgress(
+    servicesPortfolioProgress.set(
       nextValue,
     );
   };
@@ -231,7 +258,7 @@ export default function HomePage({
   const nextValue = clamp01(value);
 
     heroServicesProgressRef.current = nextValue;
-    setHeroServicesProgress(nextValue);
+    heroServicesProgress.set(nextValue);
   };
   
   // Pop-up states for Liquid Glass capabilities description (Light mode, clean glass)
@@ -258,7 +285,11 @@ export default function HomePage({
     ];
 
   // Mouse coordinate tracking for advanced 3D logo parallax depth
-  const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
+  // Motion values: following the mouse never re-renders the page.
+  const heroImageX = useMotionValue(0);
+  const heroImageY = useMotionValue(0);
+  const heroLogoX = useMotionValue(0);
+  const heroLogoY = useMotionValue(0);
 
   // Debouncing locks to make scrolling snappy and instant
   const isAnimatingRef = useRef(false);
@@ -275,7 +306,7 @@ export default function HomePage({
   const isTweeningRef = useRef(false);
 
   // Opening a services card: the sphere disperses, then the page changes.
-  const [servicesDisperse, setServicesDisperse] = useState(0);
+  const servicesDisperse = useMotionValue(0);
   const isDispersingRef = useRef(false);
 
   // Portfolio horizontal trackpad gesture state.
@@ -313,7 +344,22 @@ export default function HomePage({
       const x = (e.clientX - window.innerWidth / 2) * 0.03;
       const y = (e.clientY - window.innerHeight / 2) * 0.03;
 
-      setMouseOffset({ x, y });
+      // Same easing the hero image and logo used as animate targets.
+      const imageEase = {
+        duration: 1.15,
+        ease: [0.16, 1, 0.3, 1] as const,
+      };
+      const logoSpring = {
+        type: 'spring' as const,
+        stiffness: 85,
+        damping: 24,
+        mass: 0.65,
+      };
+
+      animate(heroImageX, x * 0.32, imageEase);
+      animate(heroImageY, y * 0.32, imageEase);
+      animate(heroLogoX, x * 0.55, logoSpring);
+      animate(heroLogoY, y * 0.55, logoSpring);
     };
 
     window.addEventListener(
@@ -651,11 +697,10 @@ export default function HomePage({
     isDispersingRef.current = true;
     isTweeningRef.current = true;
 
-    animate(0, 1, {
+    animate(servicesDisperse, 1, {
       duration: 0.85,
       // Starts gently, then the burst accelerates away.
       ease: [0.5, 0, 0.75, 0.2],
-      onUpdate: setServicesDisperse,
       onComplete: goToServices,
     });
   };
@@ -1344,22 +1389,24 @@ export default function HomePage({
   const capabilitiesData = serviceAreas;
 
 
-  const particleMorphProgress = rangeProgress(
+  const particleMorphProgress = useTransform(
     heroServicesProgress,
-    0.06,
-    0.96,
+    (value) => rangeProgress(value, 0.06, 0.96),
   );
 
-  const particleCanvasTakeover = rangeProgress(
+  const particleCanvasTakeover = useTransform(
     heroServicesProgress,
-    0.01,
-    0.05,
+    (value) => rangeProgress(value, 0.01, 0.05),
   );
 
-  const heroDarkenProgress = rangeProgress(
+  const heroLogoOpacity = useTransform(
+    particleCanvasTakeover,
+    (value) => 1 - value,
+  );
+
+  const heroDarkenOpacity = useTransform(
     heroServicesProgress,
-    0.18,
-    0.88,
+    (value) => rangeProgress(value, 0.18, 0.88) * 0.94,
   );
 
   /*
@@ -1371,22 +1418,22 @@ export default function HomePage({
   *
   * The particle sphere does NOT start morphing before 0.18.
   */
-  const servicesExitProgress =
-    smoothstep(
-      rangeProgress(
-        servicesPortfolioProgress,
-        0.02,
-        0.18,
-      ),
-    );
+  const servicesExitProgress = useTransform(
+    servicesPortfolioProgress,
+    (value) => smoothstep(rangeProgress(value, 0.02, 0.18)),
+  );
 
-  const servicesContentOpacity =
-    1 - servicesExitProgress;
+  // Cards fade fast while the sphere disperses.
+  const servicesContentOpacity = useTransform(
+    [servicesExitProgress, servicesDisperse],
+    ([exit, disperse]: number[]) =>
+      (1 - exit) * Math.max(0, 1 - disperse * 2.2),
+  );
 
-  const servicesContentScale =
-    1 -
-    servicesExitProgress * 0.025;
-
+  const servicesContentScale = useTransform(
+    servicesExitProgress,
+    (exit) => 1 - exit * 0.025,
+  );
 
   /*
   * PORTFOLIO CONTENT
@@ -1397,27 +1444,20 @@ export default function HomePage({
   * Reverse scroll automatically means:
   * Portfolio UI leaves before the cloud contracts.
   */
-  const portfolioEnterProgress =
-    smoothstep(
-      rangeProgress(
-        servicesPortfolioProgress,
-        0.82,
-        0.98,
-      ),
-    );
+  const portfolioEnterProgress = useTransform(
+    servicesPortfolioProgress,
+    (value) => smoothstep(rangeProgress(value, 0.82, 0.98)),
+  );
 
-  const portfolioContentOpacity =
-    portfolioEnterProgress;
+  const portfolioContentScale = useTransform(
+    portfolioEnterProgress,
+    (enter) => 0.97 + enter * 0.03,
+  );
 
-  const portfolioContentScale =
-    0.97 +
-    portfolioEnterProgress *
-      0.03;
-
-  const portfolioContentY =
-    (1 -
-      portfolioEnterProgress) *
-    18;
+  const portfolioContentY = useTransform(
+    portfolioEnterProgress,
+    (enter) => (1 - enter) * 18,
+  );
 
   // Portfolio projects data featuring official uploaded logos and fast high-end sample looping videos from Google Storage CDN
   const portfolioProjects = [
@@ -1759,11 +1799,13 @@ export default function HomePage({
                   decoding="async"
                   className="absolute inset-0 h-full w-full object-cover object-center pointer-events-none"
                   initial={{ opacity: 0, scale: 1.075 }}
+                  style={{
+                    x: heroImageX,
+                    y: heroImageY,
+                  }}
                   animate={{
                     opacity: 1,
                     scale: 1.035,
-                    x: mouseOffset.x * 0.32,
-                    y: mouseOffset.y * 0.32,
                   }}
                   transition={{
                     duration: 1.15,
@@ -1794,11 +1836,11 @@ export default function HomePage({
                   />
                 )}
               </motion.div>
-              <div
+              <motion.div
                 aria-hidden="true"
                 className="pointer-events-none absolute inset-0 z-[2] bg-black"
                 style={{
-                  opacity: heroDarkenProgress * 0.94,
+                  opacity: heroDarkenOpacity,
                 }}
               />
 
@@ -1850,15 +1892,12 @@ export default function HomePage({
                   <motion.div
                     className="relative"
                     style={{
-                      opacity: 1 - particleCanvasTakeover,
+                      opacity: heroLogoOpacity,
+                      x: heroLogoX,
+                      y: heroLogoY,
                     }}
                     ref={heroLogoRef}
                     data-hero-logo
-                    animate={{
-                      x: mouseOffset.x * 0.55,
-                      y: mouseOffset.y * 0.55,
-                    }}
-                    transition={{ type: 'spring', stiffness: 85, damping: 24, mass: 0.65 }}
                   >
                     {/* Revealed when the intro's mark lands on its "A" */}
                     <motion.div
@@ -1939,23 +1978,13 @@ export default function HomePage({
               * Keep it mounted slightly beyond the end of its
               * fade so React never removes visible content.
               */}
-              {servicesPortfolioProgress <= 0.21 && (
-                <div
+              {isServicesContentMounted && (
+                <motion.div
                   className="absolute inset-0"
                   style={{
-                    // Cards fade fast while the sphere disperses.
-                    opacity:
-                      servicesContentOpacity *
-                      Math.max(
-                        0,
-                        1 - servicesDisperse * 2.2,
-                      ),
-
-                    transform:
-                      `scale(${servicesContentScale})`,
-
-                    transformOrigin:
-                      '50% 50%',
+                    opacity: servicesContentOpacity,
+                    scale: servicesContentScale,
+                    transformOrigin: '50% 50%',
                   }}
                 >
                   <ServicesExperience
@@ -1963,7 +1992,7 @@ export default function HomePage({
                       openServicesWithDisperse
                     }
                   />
-                </div>
+                </motion.div>
               )}
 
               {/*
@@ -1972,18 +2001,14 @@ export default function HomePage({
               * Mount it BEFORE it becomes visible.
               * It therefore never suddenly appears.
               */}
-              {servicesPortfolioProgress >= 0.79 && (
-                <div
+              {isPortfolioContentMounted && (
+                <motion.div
                   className="absolute inset-0"
                   style={{
-                    opacity:
-                      portfolioContentOpacity,
-
-                    transform:
-                      `translateY(${portfolioContentY}px) scale(${portfolioContentScale})`,
-
-                    transformOrigin:
-                      '50% 50%',
+                    opacity: portfolioEnterProgress,
+                    y: portfolioContentY,
+                    scale: portfolioContentScale,
+                    transformOrigin: '50% 50%',
                   }}
                 >
                   <div className="absolute inset-0 [&_h3]:hidden">
@@ -2005,7 +2030,7 @@ export default function HomePage({
                       }
                     />
                   </div>
-                </div>
+                </motion.div>
               )}
             </motion.div>
           )}

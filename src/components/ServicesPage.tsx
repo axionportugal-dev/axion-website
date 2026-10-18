@@ -295,17 +295,17 @@ export default function ServicesPage({
       return elements;
     };
 
-    const updateParticleScrollPosition = () => {
-      frame = 0;
+    /*
+     * Section anchors in document coordinates. Measuring them on every
+     * scroll frame forced a layout each time; they only change when
+     * something resizes, so they are cached and remeasured then.
+     */
+    let anchors: number[] = [];
+    let anchorsStale = true;
 
-      const elements = getOrderedSections();
-
-      if (elements.length === 0) return;
-
-      const viewportCentre =
-        window.scrollY + window.innerHeight * 0.5;
-
-      const anchors = elements.map((element) => {
+    const measureAnchors = () => {
+      anchorsStale = false;
+      anchors = getOrderedSections().map((element) => {
         const rect = element.getBoundingClientRect();
 
         return (
@@ -314,6 +314,17 @@ export default function ServicesPage({
           Math.min(rect.height * 0.5, window.innerHeight * 0.5)
         );
       });
+    };
+
+    const updateParticleScrollPosition = () => {
+      frame = 0;
+
+      if (anchorsStale) measureAnchors();
+
+      if (anchors.length === 0) return;
+
+      const viewportCentre =
+        window.scrollY + window.innerHeight * 0.5;
 
       if (viewportCentre <= anchors[0]) {
         particleScrollPositionRef.current = 0;
@@ -374,15 +385,22 @@ export default function ServicesPage({
       );
     };
 
+    const scheduleRemeasure = () => {
+      anchorsStale = true;
+      scheduleUpdate();
+    };
+
     const observedSections = getOrderedSections();
 
     const resizeObserver = new ResizeObserver(
-      scheduleUpdate,
+      scheduleRemeasure,
     );
 
     observedSections.forEach((element) =>
       resizeObserver.observe(element),
     );
+    // Anything above the sections changing height moves them too.
+    resizeObserver.observe(document.body);
 
     scheduleUpdate();
 
@@ -394,7 +412,7 @@ export default function ServicesPage({
 
     window.addEventListener(
       'resize',
-      scheduleUpdate,
+      scheduleRemeasure,
     );
 
     return () => {
@@ -411,7 +429,7 @@ export default function ServicesPage({
 
       window.removeEventListener(
         'resize',
-        scheduleUpdate,
+        scheduleRemeasure,
       );
     };
   }, []);

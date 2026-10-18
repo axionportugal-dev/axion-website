@@ -3,21 +3,33 @@ import {
   useRef,
   type RefObject,
 } from 'react';
+import type { MotionValue } from 'motion/react';
 import {
   COMPACT_LAYOUT_MAX_WIDTH,
   COMPACT_SPHERE_CENTER_Y,
 } from './compactLayout';
 
+/*
+ * Progress inputs may be motion values: the canvas reads them every frame,
+ * so scrubbing the home transitions never re-renders React.
+ */
+type Animatable = number | MotionValue<number>;
+
+const readValue = (value: Animatable) =>
+  typeof value === 'number'
+    ? value
+    : value.get();
+
 interface AxionParticleFieldProps {
-  morphProgress: number;
-  servicesPortfolioProgress?: number;
-  opacity?: number;
+  morphProgress: Animatable;
+  servicesPortfolioProgress?: Animatable;
+  opacity?: Animatable;
   sourceElementRef?: RefObject<HTMLElement | null>;
   /*
    * 0 -> 1 when a services card is opened: the sphere bursts outwards and
    * fades before the services page takes over.
    */
-  disperseProgress?: number;
+  disperseProgress?: Animatable;
 }
 
 interface Fragment {
@@ -66,6 +78,12 @@ const TILE_SIZE = 8;
 const EXTRA_CLOUD_PARTICLE_COUNT = 2800;
 const POINT_SPRITE_SIZE = 32;
 const DISPERSE_RADIUS_GAIN = 6;
+/*
+ * While nothing is scrubbing the scene only the slow ambient rotation and
+ * twinkle move: 30 fps is indistinguishable there and halves the work.
+ * Transitions always draw every frame.
+ */
+const AMBIENT_FRAME_MS = 29;
 
 const TAU = Math.PI * 2;
 const GOLDEN_ANGLE =
@@ -175,42 +193,24 @@ export default function AxionParticleField({
   const extraCloudParticlesRef =
     useRef<ExtraCloudParticle[]>([]);
 
-  const progressRef =
-    useRef(morphProgress);
-
-  const servicesPortfolioProgressRef =
-    useRef(
-      servicesPortfolioProgress,
-    );
-
-  const opacityRef =
-    useRef(opacity);
-
-  const disperseRef =
-    useRef(disperseProgress);
-  disperseRef.current = disperseProgress;
+  const inputsRef = useRef({
+    morphProgress,
+    servicesPortfolioProgress,
+    opacity,
+    disperseProgress,
+  });
+  inputsRef.current = {
+    morphProgress,
+    servicesPortfolioProgress,
+    opacity,
+    disperseProgress,
+  };
 
   const sourceMetricsRef = useRef({
     drawWidth: SAMPLE_WIDTH,
     drawHeight: SAMPLE_HEIGHT,
     imageAspect: 2.5,
   });
-
-  useEffect(() => {
-    progressRef.current =
-      clamp01(morphProgress);
-  }, [morphProgress]);
-
-  useEffect(() => {
-    servicesPortfolioProgressRef.current =
-      clamp01(
-        servicesPortfolioProgress,
-      );
-  }, [servicesPortfolioProgress]);
-
-  useEffect(() => {
-    opacityRef.current = opacity;
-  }, [opacity]);
 
   /*
    * Extra particles only exist visually as we move
@@ -650,7 +650,16 @@ export default function AxionParticleField({
     let extraParticleStride = 1;
     let qualityCooldown = 0;
 
+    let lastDrawTimestamp = 0;
+    let lastMorph = -1;
+    let lastCloud = -1;
+    let lastDisperse = -1;
+    let lastOpacity = -1;
+
     const resize = () => {
+      // Resizing clears the canvas: draw again on the next frame.
+      lastDrawTimestamp = 0;
+
       const rect =
         canvas.getBoundingClientRect();
 
@@ -731,6 +740,36 @@ export default function AxionParticleField({
 
       lastTimestamp = timestamp;
 
+      const inputs = inputsRef.current;
+      const morphInput = readValue(inputs.morphProgress);
+      const cloudInput = readValue(inputs.servicesPortfolioProgress);
+      const disperseInput = readValue(inputs.disperseProgress);
+      const opacityInput = readValue(inputs.opacity);
+
+      const isSettled =
+        morphInput === lastMorph &&
+        cloudInput === lastCloud &&
+        disperseInput === lastDisperse &&
+        opacityInput === lastOpacity;
+
+      if (
+        isSettled &&
+        timestamp - lastDrawTimestamp < AMBIENT_FRAME_MS
+      ) {
+        frame =
+          window.requestAnimationFrame(
+            draw,
+          );
+
+        return;
+      }
+
+      lastMorph = morphInput;
+      lastCloud = cloudInput;
+      lastDisperse = disperseInput;
+      lastOpacity = opacityInput;
+      lastDrawTimestamp = timestamp;
+
       context.clearRect(
         0,
         0,
@@ -757,10 +796,10 @@ export default function AxionParticleField({
       }
 
       const logoProgress =
-        progressRef.current;
+        clamp01(morphInput);
 
       const rawCloudProgress =
-        servicesPortfolioProgressRef.current;
+        clamp01(cloudInput);
 
       /*
       * 0.00 -> 0.18
@@ -784,11 +823,11 @@ export default function AxionParticleField({
           ),
         );
 
-      const disperse = disperseRef.current;
+      const disperse = disperseInput;
 
       // Bursting points fade out as they fly away.
       const globalOpacity =
-        opacityRef.current *
+        opacityInput *
         (1 - disperse) ** 1.4;
 
       // Nothing visible: keep the loop alive but skip all per-point work.
