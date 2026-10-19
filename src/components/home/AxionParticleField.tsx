@@ -344,8 +344,9 @@ export default function AxionParticleField({
   useEffect(() => {
     const image = new Image();
 
+    // Same file the hero logo picks from its srcset, so it is cached.
     image.src =
-      '/assets/logowhite.png';
+      '/assets/logowhite-1920.webp';
 
     image.onload = () => {
       const sourceCanvas =

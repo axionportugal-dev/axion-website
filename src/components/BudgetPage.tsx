@@ -370,6 +370,7 @@ export default function BudgetPage({ onBackToHome }: BudgetPageProps) {
                 <div className="absolute inset-0 rounded-full bg-sky-400/20 blur-3xl scale-150" />
                 <Logo
                   theme="dark"
+                  sizes="288px"
                   className="relative h-48 w-48 max-h-[42vw] max-w-[42vw] sm:h-64 sm:w-64 md:h-72 md:w-72"
                 />
               </motion.div>

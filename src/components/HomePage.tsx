@@ -1917,7 +1917,7 @@ export default function HomePage({
                       }}
                     >
                       <div className="absolute inset-1/4 rounded-full bg-sky-300/20 blur-[80px] pointer-events-none" />
-                      <Logo theme="dark" glow={false} className="h-64 w-[24rem] max-w-[88vw] sm:h-72 sm:w-[32rem] md:h-[24rem] md:w-[42rem] lg:h-[28rem] lg:w-[50rem]" />
+                      <Logo theme="dark" glow={false} sizes="(min-width: 1024px) 800px, (min-width: 768px) 672px, (min-width: 640px) 512px, min(384px, 88vw)" className="h-64 w-[24rem] max-w-[88vw] sm:h-72 sm:w-[32rem] md:h-[24rem] md:w-[42rem] lg:h-[28rem] lg:w-[50rem]" />
                     </motion.div>
                   </motion.div>
                 </motion.div>
@@ -2170,6 +2170,8 @@ export default function HomePage({
                 <Logo
                   theme="light"
                   glow={false}
+                  // Drawn at ~4.6x its box: use the full-size rendition.
+                  sizes="1024px"
                   className="scale-[4.6]"
                 />
               </div>
