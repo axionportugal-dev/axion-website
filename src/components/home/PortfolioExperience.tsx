@@ -10,6 +10,8 @@ interface PortfolioProject {
   logo: string;
   backgroundUrl: string;
   backgroundType: string;
+  // Still frame shown until the video can play (and while it is paused).
+  posterUrl?: string;
   desc: string;
   kpi: string;
   result: string;
@@ -23,9 +25,11 @@ interface PortfolioProject {
  */
 function RailVideo({
   src,
+  poster,
   shouldPlay,
 }: {
   src: string;
+  poster?: string;
   shouldPlay: boolean;
 }) {
   const videoRef =
@@ -48,6 +52,7 @@ function RailVideo({
     <video
       ref={videoRef}
       src={src}
+      poster={poster}
       autoPlay={shouldPlay}
       preload={shouldPlay ? 'auto' : 'metadata'}
       loop
@@ -441,6 +446,7 @@ export default function PortfolioExperience({
                   'video' ? (
                     <RailVideo
                       src={project.backgroundUrl}
+                      poster={project.posterUrl}
                       shouldPlay={!isOuter}
                     />
                   ) : (

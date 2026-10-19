@@ -33,6 +33,7 @@ const revissantLogo = "/assets/revissant-logo.webp";
 const auraEventsLogo = "/assets/auraevents-logo.webp";
 const casasDoBecoLogo = "/assets/casasdobeco-logo.webp";
 const revissantBackground = new URL('../../assets/revissantbackground.mp4', import.meta.url).href;
+const revissantPoster = new URL('../../assets/revissantposter.webp', import.meta.url).href;
 const auraBackground = new URL('../../assets/aurabackground.webp', import.meta.url).href;
 const casasDoBecoBackground = new URL('../../assets/casasdobecovideo.mp4', import.meta.url).href;
 const heroBackground = new URL('../../assets/herobw.webp', import.meta.url).href;
@@ -1469,6 +1470,7 @@ export default function HomePage({
       logo: revissantLogo,
       backgroundUrl: revissantBackground,
       backgroundType: 'video',
+      posterUrl: revissantPoster,
       desc: 'Uma experiência de e-commerce de alta joalharia e perfumaria premium com transições orgânicas a 120 FPS e design imersivo sob medida.',
       kpi: '+140% Conversões',
       result: 'Resultado de E-Commerce'
