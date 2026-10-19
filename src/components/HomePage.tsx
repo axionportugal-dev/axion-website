@@ -36,6 +36,7 @@ const revissantBackground = new URL('../../assets/revissantbackground.mp4', impo
 const revissantPoster = new URL('../../assets/revissantposter.webp', import.meta.url).href;
 const auraBackground = new URL('../../assets/aurabackground.webp', import.meta.url).href;
 const casasDoBecoBackground = new URL('../../assets/casasdobecovideo.mp4', import.meta.url).href;
+const casasDoBecoPoster = new URL('../../assets/casasdobecoposter.webp', import.meta.url).href;
 const heroBackground = new URL('../../assets/herobw.webp', import.meta.url).href;
 const heroBackgroundSmall = new URL('../../assets/herobw-960.webp', import.meta.url).href;
 
@@ -1493,6 +1494,7 @@ export default function HomePage({
       logo: casasDoBecoLogo,
       backgroundUrl: casasDoBecoBackground,
       backgroundType: 'video',
+      posterUrl: casasDoBecoPoster,
       desc: 'Reposicionamento digital e direção de arte completa para uma marca de alojamentos de charme tradicionais portugueses, alinhando a herança clássica com sofisticação contemporânea.',
       kpi: '+300k Alcance Orgânico',
       result: 'Expansão de Autoridade Orgânica'

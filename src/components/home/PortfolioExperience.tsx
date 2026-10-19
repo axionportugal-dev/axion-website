@@ -18,43 +18,36 @@ interface PortfolioProject {
 }
 
 /*
- * Background video that only decodes while its card is on screen.
- *
- * The rail keeps cards mounted while they move, so the autoPlay attribute
- * (only read on mount) cannot follow the card. Play/pause is driven here.
+ * Card background video. Only the centre card loads and plays it; the side
+ * cards show the still poster and never download the video. Leaving the
+ * centre unmounts the <video>, which also frees its decoder.
  */
 function RailVideo({
   src,
   poster,
-  shouldPlay,
+  isActive,
 }: {
   src: string;
   poster?: string;
-  shouldPlay: boolean;
+  isActive: boolean;
 }) {
-  const videoRef =
-    useRef<HTMLVideoElement>(null);
-
-  useEffect(() => {
-    const video = videoRef.current;
-
-    if (!video) return;
-
-    if (shouldPlay) {
-      // play() rejects when interrupted by a pause; that is expected.
-      video.play().catch(() => {});
-    } else {
-      video.pause();
-    }
-  }, [shouldPlay]);
+  if (!isActive) {
+    return poster ? (
+      <img
+        src={poster}
+        alt=""
+        decoding="async"
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+      />
+    ) : null;
+  }
 
   return (
     <video
-      ref={videoRef}
       src={src}
       poster={poster}
-      autoPlay={shouldPlay}
-      preload={shouldPlay ? 'auto' : 'metadata'}
+      autoPlay
+      preload="auto"
       loop
       muted
       playsInline
@@ -347,9 +340,6 @@ export default function PortfolioExperience({
               const isActive =
                 offset === 0;
 
-              const isOuter =
-                Math.abs(offset) >= 2;
-
               return (
                 <motion.button
                   key={`portfolio-${virtualIndex}`}
@@ -447,7 +437,7 @@ export default function PortfolioExperience({
                     <RailVideo
                       src={project.backgroundUrl}
                       poster={project.posterUrl}
-                      shouldPlay={!isOuter}
+                      isActive={isActive}
                     />
                   ) : (
                     <img
