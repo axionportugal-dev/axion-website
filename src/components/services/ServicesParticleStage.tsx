@@ -34,6 +34,11 @@ const TAU = Math.PI * 2;
 const POINT_SPRITE_SIZE = 32;
 const ENTRANCE_MS = 1400;
 const ENTRANCE_SPREAD = 2.4;
+/*
+ * When the page is not scrolling only the slow ambient drift moves:
+ * 30 fps is indistinguishable there. Scrolling draws every frame.
+ */
+const AMBIENT_FRAME_MS = 29;
 
 export const SERVICES_PARTICLE_SHAPES: readonly ServicesParticleShape[] = [
   'cloud',
@@ -673,8 +678,14 @@ export default function ServicesParticleStage({
     let qualityLevel = 0;
     let qualityCooldown = 0;
 
+    let lastDrawTimestamp = 0;
+    let lastScrollPosition = -1;
+
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
+
+      // Resizing clears the canvas: draw again on the next frame.
+      lastDrawTimestamp = 0;
 
       width = rect.width;
       height = rect.height;
@@ -795,13 +806,31 @@ export default function ServicesParticleStage({
 
       lastTimestamp = timestamp;
 
+      const scrollPosition = scrollPositionRef.current;
+      const isEntering =
+        !reduceMotion &&
+        (!entranceStart ||
+          timestamp - entranceStart < ENTRANCE_MS);
+
+      if (
+        !isEntering &&
+        scrollPosition === lastScrollPosition &&
+        timestamp - lastDrawTimestamp < AMBIENT_FRAME_MS
+      ) {
+        frame = window.requestAnimationFrame(draw);
+        return;
+      }
+
+      lastScrollPosition = scrollPosition;
+      lastDrawTimestamp = timestamp;
+
       context.clearRect(0, 0, width, height);
 
       const lastShapeIndex =
         SERVICES_PARTICLE_SHAPES.length - 1;
 
       const rawPosition = clamp(
-        scrollPositionRef.current,
+        scrollPosition,
         0,
         lastShapeIndex,
       );

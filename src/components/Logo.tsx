@@ -6,6 +6,11 @@ interface LogoProps {
   glow?: boolean;
   theme: 'light' | 'dark';
   variant?: 'default' | 'symbol';
+  /*
+   * Rendered width for responsive image selection (the img `sizes`).
+   * Most logos are small marks; large ones pass their real width.
+   */
+  sizes?: string;
 }
 
 export default function Logo({
@@ -13,6 +18,7 @@ export default function Logo({
   glow = true,
   theme,
   variant = 'default',
+  sizes = '64px',
 }: LogoProps) {
   const isDark = theme === 'dark';
   const isSymbol = variant === 'symbol';
@@ -32,6 +38,12 @@ export default function Logo({
     : isDark
       ? '/assets/logowhite.png'
       : '/assets/logo.png';
+
+  // WebP renditions (the PNGs stay as the fallback src and for SEO/icons).
+  const logoSrcSet =
+    logoSrc === '/assets/logowhite.png'
+      ? '/assets/logowhite-480.webp 480w, /assets/logowhite-960.webp 960w, /assets/logowhite-1920.webp 1920w'
+      : '/assets/logo-128.webp 128w, /assets/logo-256.webp 256w, /assets/logo-510.webp 510w';
 
   const setError = isSymbol
     ? setLogoError
@@ -92,6 +104,8 @@ export default function Logo({
         {!hasError ? (
           <motion.img
             src={logoSrc}
+            srcSet={logoSrcSet}
+            sizes={sizes}
             alt="Axion Logo"
             className={`w-full h-full object-contain relative z-10 filter drop-shadow-lg select-none pointer-events-none ${
               isSymbol && isDark ? 'brightness-0 invert' : ''

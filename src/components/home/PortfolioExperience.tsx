@@ -10,46 +10,44 @@ interface PortfolioProject {
   logo: string;
   backgroundUrl: string;
   backgroundType: string;
+  // Still frame shown until the video can play (and while it is paused).
+  posterUrl?: string;
   desc: string;
   kpi: string;
   result: string;
 }
 
 /*
- * Background video that only decodes while its card is on screen.
- *
- * The rail keeps cards mounted while they move, so the autoPlay attribute
- * (only read on mount) cannot follow the card. Play/pause is driven here.
+ * Card background video. Only the centre card loads and plays it; the side
+ * cards show the still poster and never download the video. Leaving the
+ * centre unmounts the <video>, which also frees its decoder.
  */
 function RailVideo({
   src,
-  shouldPlay,
+  poster,
+  isActive,
 }: {
   src: string;
-  shouldPlay: boolean;
+  poster?: string;
+  isActive: boolean;
 }) {
-  const videoRef =
-    useRef<HTMLVideoElement>(null);
-
-  useEffect(() => {
-    const video = videoRef.current;
-
-    if (!video) return;
-
-    if (shouldPlay) {
-      // play() rejects when interrupted by a pause; that is expected.
-      video.play().catch(() => {});
-    } else {
-      video.pause();
-    }
-  }, [shouldPlay]);
+  if (!isActive) {
+    return poster ? (
+      <img
+        src={poster}
+        alt=""
+        decoding="async"
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+      />
+    ) : null;
+  }
 
   return (
     <video
-      ref={videoRef}
       src={src}
-      autoPlay={shouldPlay}
-      preload={shouldPlay ? 'auto' : 'metadata'}
+      poster={poster}
+      autoPlay
+      preload="auto"
       loop
       muted
       playsInline
@@ -342,9 +340,6 @@ export default function PortfolioExperience({
               const isActive =
                 offset === 0;
 
-              const isOuter =
-                Math.abs(offset) >= 2;
-
               return (
                 <motion.button
                   key={`portfolio-${virtualIndex}`}
@@ -424,10 +419,10 @@ export default function PortfolioExperience({
 
                     /*
                      * No opacity or brightness penalty.
-                     * All cards remain fully visible.
+                     * All cards remain fully visible. (No identity
+                     * filter either: it only cost a filter layer.)
                      */
                     opacity: 1,
-                    filter: 'brightness(1)',
                   }}
                   transition={{
                     type: 'spring',
@@ -441,7 +436,8 @@ export default function PortfolioExperience({
                   'video' ? (
                     <RailVideo
                       src={project.backgroundUrl}
-                      shouldPlay={!isOuter}
+                      poster={project.posterUrl}
+                      isActive={isActive}
                     />
                   ) : (
                     <img
@@ -543,7 +539,7 @@ export default function PortfolioExperience({
           type="button"
           onClick={onPrev}
           aria-label="Projeto anterior"
-          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-white/[0.035] text-white/60 backdrop-blur-md transition-all duration-300 hover:border-white/30 hover:bg-white/[0.07] hover:text-white"
+          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-white/[0.035] text-white/60 transition-all duration-300 hover:border-white/30 hover:bg-white/[0.07] hover:text-white"
         >
           <ChevronLeft size={14} />
         </button>
@@ -572,7 +568,7 @@ export default function PortfolioExperience({
           type="button"
           onClick={onNext}
           aria-label="Projeto seguinte"
-          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-white/[0.035] text-white/60 backdrop-blur-md transition-all duration-300 hover:border-white/30 hover:bg-white/[0.07] hover:text-white"
+          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-white/[0.035] text-white/60 transition-all duration-300 hover:border-white/30 hover:bg-white/[0.07] hover:text-white"
         >
           <ChevronRight size={14} />
         </button>

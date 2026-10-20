@@ -184,7 +184,7 @@ export default function WebsiteFooter({
 }: WebsiteFooterProps) {
   return (
     <footer
-      className={`relative w-full px-6 md:px-12 text-left bg-slate-950/98 backdrop-blur-2xl border-t border-white/10 shadow-[0_-30px_80px_rgba(2,6,23,0.48)] ${className}`}
+      className={`relative w-full px-6 md:px-12 text-left bg-slate-950/98 border-t border-white/10 shadow-[0_-30px_80px_rgba(2,6,23,0.48)] ${className}`}
     >
       <WebsiteFooterContent
         sectionLabels={

@@ -136,8 +136,18 @@ function FloatingTriangleItem({ triangle, smoothX, smoothY, theme, variant }: Fl
   const xOffset = useTransform(smoothX, (val: number) => val * parallaxAmount);
   const yOffset = useTransform(smoothY, (val: number) => val * parallaxAmount);
 
+  /*
+   * Floating and spinning are CSS animations of the individual `translate`
+   * and `rotate` properties (see index.css): the compositor runs them, so
+   * the blurred triangle is rasterised once instead of every frame. The
+   * mouse parallax writes `transform`, which browsers apply after them -
+   * translate(float) rotate(spin) rotate(start) translate(parallax), the
+   * same order as before - so everything shares a single layer.
+   */
+  const startRotation = `rotate(${triangle.rotation}deg)`;
+
   return (
-    <motion.div
+    <div
       className="absolute"
       style={{
         left: `${triangle.x}%`,
@@ -147,30 +157,21 @@ function FloatingTriangleItem({ triangle, smoothX, smoothY, theme, variant }: Fl
         opacity: variant === 'hero' ? 0.32 + triangle.depth * 0.68 : triangle.depth * 0.9,
         zIndex: Math.floor(triangle.depth * 10),
       }}
-      animate={{
-        // Floating sinus waves
-        y: [0, -12 * triangle.speed, 0],
-        rotate: [triangle.rotation, triangle.rotation + 360],
-      }}
-      transition={{
-        y: {
-          duration: 5 / triangle.speed,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        },
-        rotate: {
-          duration: 45 / triangle.speed,
-          repeat: Infinity,
-          ease: 'linear',
-        },
-      }}
     >
       <motion.div
+        className="axion-triangle h-full w-full"
         style={{
           x: xOffset,
           y: yOffset,
+          // speed is 0.4, 0.7 or 1: one fixed float keyframe set per speed.
+          animationName: `axion-triangle-float-${Math.round((triangle.speed - 0.4) / 0.3)}, axion-triangle-spin`,
+          animationDuration: `${5 / triangle.speed}s, ${45 / triangle.speed}s`,
         }}
-        className="w-full h-full"
+        transformTemplate={(_, generated) =>
+          generated === 'none'
+            ? startRotation
+            : `${startRotation} ${generated}`
+        }
       >
         <svg
           viewBox="0 0 100 100"
@@ -206,7 +207,7 @@ function FloatingTriangleItem({ triangle, smoothX, smoothY, theme, variant }: Fl
           />
         </svg>
       </motion.div>
-    </motion.div>
+    </div>
   );
 }
 

@@ -40,19 +40,6 @@
   }
 }
 
-@keyframes axion-backdrop-breathe {
-  0%,
-  100% {
-    opacity: 0.18;
-    transform: translate(-50%, -50%) scale(0.94);
-  }
-
-  50% {
-    opacity: 0.3;
-    transform: translate(-50%, -50%) scale(1.06);
-  }
-}
-
 .axion-star {
   animation: axion-star-twinkle ease-in-out infinite alternate;
 }
@@ -62,7 +49,68 @@
 }
 
 .axion-backdrop-glow {
-  animation: axion-backdrop-breathe 12s ease-in-out infinite;
+  /*
+   * Static: the old 12s "breathing" moved a gradient of ~1% luminance,
+   * invisible in practice, yet kept a 58rem composited layer animating.
+   */
+  opacity: 0.24;
+  transform: translate(-50%, -50%);
+}
+
+/*
+ * FloatingTriangles: compositor-only float + spin on the individual
+ * translate / rotate properties. Keyframes use fixed values (no var()) so
+ * browsers can run them off the main thread; the three float heights match
+ * the three triangle speeds.
+ */
+@keyframes axion-triangle-float-0 {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -4.8px;
+  }
+}
+
+@keyframes axion-triangle-float-1 {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -8.4px;
+  }
+}
+
+@keyframes axion-triangle-float-2 {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -12px;
+  }
+}
+
+@keyframes axion-triangle-spin {
+  from {
+    rotate: 0deg;
+  }
+  to {
+    rotate: 360deg;
+  }
+}
+
+.axion-triangle {
+  animation-timing-function: ease-in-out, linear;
+  animation-iteration-count: infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .axion-triangle {
+    animation: none;
+  }
 }
 
 /* ScrollCue: pulse travelling down a hairline. */
